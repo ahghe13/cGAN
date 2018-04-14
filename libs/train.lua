@@ -28,22 +28,24 @@ function Train(G, D, trainData, opt, e)
    if opt.gpu > 0 then
    require 'cunn'
    cutorch.setDevice(opt.gpu)
-   inputD = inputD:cuda();  noise = noise:cuda();  labels = labels:cuda()
+   inputD = inputD:cuda(); inputG = inputG:cuda();  noise = noise:cuda();  labels = labels:cuda(); label = label:cuda(); class = class:cuda()
 
    if pcall(require, 'cudnn') then
       require 'cudnn'
       cudnn.benchmark = true
-      cudnn.convert(netG, cudnn)
-      cudnn.convert(netD, cudnn)
+      cudnn.convert(G, cudnn)
+      cudnn.convert(D, cudnn)
    end
    D:cuda();           G:cuda();           criterion:cuda()
+   print('GPU activated!')
    end
 
    local fDx = function(x)
       gradParametersD:zero()
 
       -- train with real
-      local real, class = data:getBatch()
+      local real, class_tmp = data:getBatch()
+      class:copy(class_tmp)
       inputD:copy(real)
       label:fill(real_label)
       labels = torch.cat(label, class, 2)

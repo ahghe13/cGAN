@@ -1,4 +1,4 @@
--- package.path = package.path .. ";/home/ag/Dropbox/Uni/Master thesis/Software/cGAN/cGAN_v10/?.lua"
+package.path = package.path .. ";/home/ahghe13/cGAN/?.lua"
 
 require 'torch'
 require 'nn'
