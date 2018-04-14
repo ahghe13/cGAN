@@ -25,6 +25,20 @@ function Train(G, D, trainData, opt, e)
    local parametersG, gradParametersG = G:getParameters()
    local criterion = nn.BCECriterion()
 
+   if opt.gpu > 0 then
+   require 'cunn'
+   cutorch.setDevice(opt.gpu)
+   inputD = inputD:cuda();  noise = noise:cuda();  labels = labels:cuda()
+
+   if pcall(require, 'cudnn') then
+      require 'cudnn'
+      cudnn.benchmark = true
+      cudnn.convert(netG, cudnn)
+      cudnn.convert(netD, cudnn)
+   end
+   D:cuda();           G:cuda();           criterion:cuda()
+   end
+
    local fDx = function(x)
       gradParametersD:zero()
 
