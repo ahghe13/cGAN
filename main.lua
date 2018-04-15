@@ -1,7 +1,3 @@
---print(";" .. (arg[0]:match(".*/") or "") .. "?.lua")
-
---package.path = package.path .. ";" .. (arg[0]:match(".*/") or "") .. "?.lua"
-
 require 'torch'
 require 'nn'
 require 'image'
