@@ -8,7 +8,7 @@ net_type = 'full_size'			-- Choose between 'mini_size' or 'full_size'
 opt_mini_size = {
 	net_name = 'mini_cGAN',
 	data_info = '',
-	trainP = 80, testP = 10; validP = 10,
+	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 10,				-- Training Epochs
 	batchSize = 12,			-- Batch Size
@@ -32,7 +32,7 @@ opt_mini_size = {
 opt_full_size = {
 	net_name = 'cGAN',
 	data_info = '/home/ahghe13/Campanula_cropped/data_info.csv',
-	trainP = 80, testP = 10; validP = 10,
+	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 50,			-- Training Epochs
 	batchSize = 12,			-- Batch Size

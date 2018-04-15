@@ -1,7 +1,7 @@
 require 'torch'
 require 'nn'
 
-require 'libs/weights_init'
+include('weights_init.lua')
 
 
 function mini_networks(opt)

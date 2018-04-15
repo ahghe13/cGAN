@@ -1,8 +1,8 @@
 require 'torch'
 require 'nn'
 
-require 'libs/table_handling'
-require 'libs/tif_handler'
+include('table_handling.lua')
+include('tif_handler.lua')
 
 
 

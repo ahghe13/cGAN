@@ -2,7 +2,7 @@ require 'torch'
 require 'image'
 
 gm = require 'graphicsmagick'
-require 'libs/image_normalization'
+include('image_normalization.lua')
 
 --p = "/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Campanula_cropped/campanula_day1/sliced_data_64x64/d01p01s001.tif"
 

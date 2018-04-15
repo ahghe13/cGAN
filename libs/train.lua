@@ -2,7 +2,7 @@ require 'torch'
 require 'nn'
 require 'optim'
 
-require 'libs/data'
+include('data.lua')
 
 function Train(G, D, trainData, opt, e)
 
