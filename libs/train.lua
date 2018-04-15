@@ -2,7 +2,7 @@ require 'torch'
 require 'nn'
 require 'optim'
 
-require 'libs/data'
+include('data.lua')
 
 function Train(G, D, trainData, opt, e)
 
@@ -25,11 +25,27 @@ function Train(G, D, trainData, opt, e)
    local parametersG, gradParametersG = G:getParameters()
    local criterion = nn.BCECriterion()
 
+   if opt.gpu > 0 then
+   require 'cunn'
+   cutorch.setDevice(opt.gpu)
+   inputD = inputD:cuda(); inputG = inputG:cuda();  noise = noise:cuda();  labels = labels:cuda(); label = label:cuda(); class = class:cuda()
+
+   if pcall(require, 'cudnn') then
+      require 'cudnn'
+      cudnn.benchmark = true
+      cudnn.convert(G, cudnn)
+      cudnn.convert(D, cudnn)
+   end
+   D:cuda();           G:cuda();           criterion:cuda()
+   print('GPU activated!')
+   end
+
    local fDx = function(x)
       gradParametersD:zero()
 
       -- train with real
-      local real, class = data:getBatch()
+      local real, class_tmp = data:getBatch()
+      class:copy(class_tmp)
       inputD:copy(real)
       label:fill(real_label)
       labels = torch.cat(label, class, 2)

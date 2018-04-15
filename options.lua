@@ -1,14 +1,14 @@
 --######################## GAN TYPE ########################--
 
-net_type = 'mini_size'			-- Choose between 'mini_size' or 'full_size'
+net_type = 'full_size'			-- Choose between 'mini_size' or 'full_size'
 
 
 --################# OPTIONS FOR MINI_GAN ###################--
 
 opt_mini_size = {
 	net_name = 'mini_cGAN',
-	data_info = '/home/ag/Dropbox/Uni/Master thesis/Software/Data/Mini_cGAN1/data_info.csv',
-	trainP = 80, testP = 10; validP = 10,
+	data_info = '',
+	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 10,				-- Training Epochs
 	batchSize = 12,			-- Batch Size
@@ -22,7 +22,8 @@ opt_mini_size = {
 	noise_type = 'gaussian',	-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
 	save_nets = 1,				-- save every nth network; 0=disable
 	save_nets_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks/',
-	display = 1
+	display = 1,
+	gpu = 1
 }
 
 
@@ -30,8 +31,8 @@ opt_mini_size = {
 
 opt_full_size = {
 	net_name = 'cGAN',
-	data_info = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Campanula_cropped/data_info.csv',
-	trainP = 80, testP = 10; validP = 10,
+	data_info = '/home/ahghe13/Campanula_cropped/data_info.csv',
+	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 50,			-- Training Epochs
 	batchSize = 12,			-- Batch Size
@@ -42,8 +43,9 @@ opt_full_size = {
 	ndf = 64,				-- Number of descriminator filters in the first layer
 	ne = 50,				-- Number of evaluation iterations
 
-	noise_type = 'gaussian',-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
+	noise_type = 'gaussian',	-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
 	save_nets = 1,			-- save every nth network; 0=disable
-	save_nets_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks/',
-	display = 1
+	save_nets_path = '/home/ahghe13/Networks/',
+	display = 1,
+	gpu = 1
 }

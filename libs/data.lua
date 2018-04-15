@@ -2,10 +2,10 @@
 require 'torch'
 require 'image'
 
-require 'libs/list_files_in_dir'
-require 'libs/image_normalization'
-require 'libs/tif_handler'
-require 'libs/table_handling'
+include('list_files_in_dir.lua')
+include('image_normalization.lua')
+include('tif_handler.lua')
+include('table_handling.lua')
 
 Data = {}
 Data.__index = Data

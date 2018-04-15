@@ -1,16 +1,14 @@
--- package.path = package.path .. ";/home/ag/Dropbox/Uni/Master thesis/Software/cGAN/cGAN_v10/?.lua"
-
 require 'torch'
 require 'nn'
 require 'image'
 
-require 'options'
-require 'libs/networks'
-require 'libs/train'
-require 'libs/evaluation'
-require 'libs/generate'
-require 'libs/csv_to_table'
-require 'libs/table_handling'
+include('options.lua')
+include('libs/networks.lua')
+include('libs/train.lua')
+include('libs/evaluation.lua')
+include('libs/generate.lua')
+include('libs/csv_to_table.lua')
+include('libs/table_handling.lua')
 
 --##################### OPTIONS SETUP ######################--
 
