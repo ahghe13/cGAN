@@ -43,9 +43,9 @@ opt_full_size = {
 	ndf = 64,				-- Number of descriminator filters in the first layer
 	ne = 50,				-- Number of evaluation iterations
 
-	noise_type = 'gaussian',-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
+	noise_type = 'gaussian',	-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
 	save_nets = 1,			-- save every nth network; 0=disable
-	save_nets_path = '/home/ahghe13/cGAN/Networks/',
+	save_nets_path = '/home/ahghe13/Networks/',
 	display = 1,
 	gpu = 1
 }
