@@ -1,13 +1,13 @@
 --######################## GAN TYPE ########################--
 
-net_type = 'full_size'			-- Choose between 'mini_size' or 'full_size'
+net_type = 'mini_size'			-- Choose between 'mini_size' or 'full_size'
 
 
 --################# OPTIONS FOR MINI_GAN ###################--
 
 opt_mini_size = {
 	net_name = 'mini_cGAN',
-	data_info = '',
+	data_info = '/home/ag/Dropbox/Uni/Master thesis/Software/Data/Mini_cGAN1/data_info.csv',
 	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 10,				-- Training Epochs
@@ -23,7 +23,7 @@ opt_mini_size = {
 	save_nets = 1,				-- save every nth network; 0=disable
 	save_nets_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks/',
 	display = 1,
-	gpu = 1
+	gpu = 0
 }
 
 
