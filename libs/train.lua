@@ -4,6 +4,15 @@ require 'optim'
 
 include('data.lua')
 
+function round(num, numDecimalPlaces)
+  if numDecimalPlaces and numDecimalPlaces>0 then
+    local mult = 10^numDecimalPlaces
+    return math.floor(num * mult + 0.5) / mult
+  end
+  return math.floor(num + 0.5)
+end
+
+
 function Train(G, D, trainData, opt, e)
 
    data = Data:create(trainData, opt.batchSize, opt.cs)
@@ -24,6 +33,10 @@ function Train(G, D, trainData, opt, e)
    local parametersD, gradParametersD = D:getParameters()
    local parametersG, gradParametersG = G:getParameters()
    local criterion = nn.BCECriterion()
+
+   local epoch_tm = torch.Timer()
+   local itr_tm = torch.Timer()
+   local total_tm = torch.Timer()
 
    if opt.gpu > 0 then
    require 'cunn'
@@ -100,25 +113,27 @@ function Train(G, D, trainData, opt, e)
    if epoch == nil then; epoch = 1; end
 
    local totalBatches = data:getTotalBatches()
+   total_tm:reset()
 
    for i=1,e do
+      epoch_tm:reset()
       if opt.display == true then; print("Epoch " .. epoch); end
 
       for j=1,totalBatches do
-         print("Iteration " .. j .. " of " .. totalBatches)
+         itr_tm:reset()
          optim.adam(fDx, parametersD, optimStateD)
          optim.adam(fGx, parametersG, optimStateG)
+         print("Epoch " .. epoch .. " (" .. j .. "/" .. totalBatches .. ")", 
+            "Itr time: " .. round(itr_tm:time().real, 4),
+            "Total time: " .. round(total_tm:time().real, 4))
       end
 
       data:shuffle()
 
       if opt.display == true then
-         io.write("Descriminator Error: ")
-         print(errD)
-
-         io.write("Generator Error: ")
-         print(errG)
-         print()
+         print("Epoch " .. epoch .. " successfully completed!")
+         print("Descriminator Error: " .. errD, "Generator Error: " .. errG)
+         print("Epoch time: " .. epoch_tm:time().real .. "\n")
       end
 
       if epoch % opt.save_nets == 0 then
@@ -129,6 +144,8 @@ function Train(G, D, trainData, opt, e)
 
       epoch = epoch+1
    end
+
+   if opt.display == true then; print(total_tm:time().real); end
 
 end
 
