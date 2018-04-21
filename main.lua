@@ -46,6 +46,8 @@ Table2CSV(train, opt.save_nets_path .. 'train.csv', 'a')
 Table2CSV(test, opt.save_nets_path .. 'test.csv', 'a')
 Table2CSV(valid, opt.save_nets_path .. 'valid.csv', 'a')
 
+if opt.cs[1] == 'all' then; local im; im, opt.cs = load_tif(train[1][1]); end
+
 print(opt)
 torch.save(opt.save_nets_path .. '/opt.t7', opt)
 

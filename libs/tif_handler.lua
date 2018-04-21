@@ -23,7 +23,7 @@ function load_tif(path, channels, normalize)
 	elseif normalize == 'zero2one' then; img = norm_zero2one(img);
 	end
 	
-	return img
+	return img, channels
 end
 
 function LoadImgs(paths, channels, normalize)
