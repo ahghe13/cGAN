@@ -107,13 +107,13 @@ function Generate_data(netG, batch, opt)
 	return netG:forward(inputG), class
 end
 
-	function Load_Data(dataSet, cs, normalize)
-		-- Loads data from table's first column
-		local normalize = normalize or 'minusone2one' 
-		local data = cloneTable(dataSet)
-		local paths = PopCol(data, 1)
-		return LoadImgs(paths, cs, normalize), data
-	end
+function Load_Data(dataSet, cs, normalize)
+	-- Loads data from table's first column
+	local normalize = normalize or 'minusone2one' 
+	local data = cloneTable(dataSet)
+	local paths = PopCol(data, 1)
+	return LoadImgs(paths, cs, normalize), data
+end
 
 
 --################### CHOOSE EVALUATION METHOD ####################--
