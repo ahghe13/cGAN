@@ -45,12 +45,3 @@ function SplitTable(tab, portions)
 	end
 	return p
 end
-
-
-
---[[
-a = {{1,2,5,1,2},
-	 {2,4,1,5,3},
-	 {1,2,4,2,6},
-	 {1,2,1,2,3},}
-]]--

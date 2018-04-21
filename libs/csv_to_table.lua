@@ -59,15 +59,16 @@ function CatLine(line, tab, row, col)
 end
 
 
-function Table2CSV(tab, file_name)
-  file = io.open(file_name, 'w')
+function Table2CSV(tab, file_name, mode)
+  local mode = mode or 'w'
+  file = io.open(file_name, mode)
   for i=1,#tab do
     local s = ''
     for j=1,#tab[i] do
       s = s .. tab[i][j] .. ','
     end
+    s = s:sub(1, -2)
     file:write(s .. '\n')
   end
   file:close()
-
 end

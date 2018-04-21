@@ -2,7 +2,6 @@
 require 'torch'
 require 'image'
 
-include('list_files_in_dir.lua')
 include('image_normalization.lua')
 include('tif_handler.lua')
 include('table_handling.lua')
@@ -48,8 +47,7 @@ end
 function Data:getBatch()
    local class_values = torch.Tensor(self:getBatchSize(), self:getClasses())
 	for i=1, self:getBatchSize() do
-		self.batch[i] = load_tif(self.dataTable[self.index][1], self.channels)
-      self.batch[i] = norm_minusone2one(self.batch[i])
+		self.batch[i] = load_tif(self.dataTable[self.index][1], self.channels, 'minusone2one')
       for j=1,self:getClasses() do
          class_values[i][j] = self.dataTable[self.index][j+1]
       end

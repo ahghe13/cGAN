@@ -14,7 +14,6 @@ end
 
 
 function Train(G, D, trainData, opt, e)
-
    data = Data:create(trainData, opt.batchSize, opt.cs)
 
    local fake_label = 0
@@ -64,6 +63,7 @@ function Train(G, D, trainData, opt, e)
       labels = torch.cat(label, class, 2)
 
       local output = D:forward(inputD)
+
       local errD_real = criterion:forward(output, labels)
       local df_do = criterion:backward(output, labels)
       D:backward(inputD, df_do)
@@ -72,7 +72,7 @@ function Train(G, D, trainData, opt, e)
       if opt.noise_type == 'gaussian' then; noise:normal()
       elseif opt.noise_type == 'uniform_zero2one' then; noise:uniform(0,1)
       elseif opt.noise_type == 'uniform_minusone2one' then; noise:uniform(-1,1); end
-      class:uniform(-1,1)
+      class:uniform(0,1)
       inputG = torch.cat(noise, class, 2)
 
       local fake = G:forward(inputG)
