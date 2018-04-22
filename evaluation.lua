@@ -128,8 +128,8 @@ methods = {
 
 --#################### SORT NETS INTO TABLE #######################--
 
-nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
---nets_dir_path = '/home/ag/Desktop/Networks'
+--nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
+nets_dir_path = '/home/ahghe13/Networks'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
@@ -143,7 +143,7 @@ test = CSV2Table(nets_dir_path .. '/test.csv')
 table.remove(test, 1)
 valid = CSV2Table(nets_dir_path .. '/valid.csv')
 table.remove(valid, 1)
-
+if opt.gpu > 0 then; require 'cunn'; end
 
 --######### APPLY EVALUATION METHODS FOR DESCRIMINATOR ############--
 
