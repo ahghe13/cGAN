@@ -2,9 +2,15 @@ require 'torch'
 require 'nn'
 require 'image'
 
-function generate(netG, nrows, ncols)
+function generate(netG, nrows, ncols, number_of_classes, gpu)
+	local gpu = gpu or 0
+
 	nimages = nrows*ncols
-	noise = torch.randn(nimages, netG:get(1).nInputPlane, 1, 1)
+	noise_dim = netG:get(1).nInputPlane
+	noise = torch.randn(nimages, noise_dim, 1, 1)
+	for i=1,number_of_classes do; noise:select(2, noise_dim-i+1):uniform(0,1); end
+	if gpu > 0 then; noise:cuda(); end
+
 	imgs = netG:forward(noise)
 	return arrange(imgs, nrows, ncols)
 end

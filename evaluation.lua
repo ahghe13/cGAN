@@ -120,7 +120,7 @@ end
 
 methods = {
 	mse = 0,
-	generate_images = 0,
+	generate_images = 1,
 	transfer_function_analysis_fake = 1,
 	transfer_function_analysis_real = 1
 
@@ -129,6 +129,7 @@ methods = {
 --#################### SORT NETS INTO TABLE #######################--
 
 nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
+--nets_dir_path = '/home/ag/Desktop/Networks'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
@@ -170,7 +171,7 @@ if methods.generate_images == 1 then
 
 	for i=1,table.getn(evaluation) do
 		netG = torch.load(evaluation[i][2])
-		im = generate(netG, 5, 10)
+		im = generate(netG, 5, 10, table.getn(opt.classes))
 		if opt.net_name == 'mini_cGAN' then
 			im = image.scale(im, 2000,1000, 'simple')
 			image.save(gen_path .. File_name(evaluation[i][2]):sub(1,-4) .. '.jpg', im)
