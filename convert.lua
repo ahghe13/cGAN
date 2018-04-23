@@ -6,8 +6,8 @@ include('libs/list_files_in_dir.lua')
 include('libs/paths_handling.lua')
 
 convert = 'fromCuda' -- choose between 'toCuda' or 'fromCuda'
-path = '/home/ahghe13/Networks'
-output_path = '/home/ahghe13/Networks_nonCuda'
+path = '/scratch/sdubats/ahghe13/Networks01'
+output_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 -- Modify opt
 opt = torch.load(path .. '/opt.t7')
@@ -24,15 +24,17 @@ print('train, test, and valid has been copied. \n')
 
 -- Convert the nets
 print('Converting networks:')
-nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
+nets_paths = List_Files_in_Dir(path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
 
 nets_total = table.getn(nets_paths)
 
 for i=1,nets_total do
-	net = torch.load(nets_paths[i])
+	local net = torch.load(nets_paths[i])
 	if convert == 'toCuda' then; net:cuda(); end
 	if convert == 'fromCuda' then; net:double(); end
 	torch.save(output_path .. '/' .. File_name(nets_paths[i]), net)
 	print(i .. ' out of ' .. nets_total .. ' networks converted.')
 end
+
+print('Conversion completed!')
