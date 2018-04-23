@@ -8,39 +8,8 @@ include('libs/csv_to_table.lua')
 include('libs/tif_handler.lua')
 include('libs/generate.lua')
 include('libs/image_normalization.lua')
+include('libs/paths_handling.lua')
 
-function File_name(path) -- extracts filename from full path
-	return path:sub(path:match('.*()/')+1)
-end
-
-function Exclude_paths(paths, key)
-	-- Excludes paths to files whose name does not include key
-	bad_paths = {}
-	for i=1, table.getn(paths) do
-		if File_name(paths[i]):match(key) == nil then
-			table.insert(bad_paths, i)
-		end
-	end
-
-	local l = table.getn(bad_paths)
-	for i=1,l do
-		table.remove(paths, bad_paths[l-i+1])
-	end
-end
-
-function get_epoch(path)
-	local file = File_name(path)
-	local epoch = file:match('h.*_')
-	epoch = epoch:sub(2, epoch:len()-1)
-	return tonumber(epoch)
-end
-
-function get_net_type(path)
-	local file = File_name(path)
-	local net_type = file:match('_.*')
-	net_type = net_type:sub(2, net_type:len()-3)
-	return net_type
-end
 
 function Forward_netD(netD, dataSet, cs)
 	local netData = cloneTable(dataSet)
@@ -119,12 +88,13 @@ end
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 0,
-	generate_images = 1,
-	transfer_function_analysis_fake = 1,
-	transfer_function_analysis_real = 1
+	mse = 1,
+	generate_images = 0,
+	transfer_function_analysis_fake = 0,
+	transfer_function_analysis_real = 0
 
 }
+
 
 --#################### SORT NETS INTO TABLE #######################--
 
@@ -144,6 +114,7 @@ table.remove(test, 1)
 valid = CSV2Table(nets_dir_path .. '/valid.csv')
 table.remove(valid, 1)
 if opt.gpu > 0 then; require 'cunn'; end
+
 
 --######### APPLY EVALUATION METHODS FOR DESCRIMINATOR ############--
 
