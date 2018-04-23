@@ -14,15 +14,16 @@ opt = torch.load(path .. '/opt.t7')
 if convert == 'toCuda' then; opt.gpu = 1; end
 if convert == 'fromCuda' then; opt.gpu = 0; end
 torch.save(output_path .. '/opt.t7', opt)
-print('opt converted.')
+print('opt converted. \n')
 
 -- Copy train, test, and valid
 os.execute('cp ' .. path .. '/train.csv ' .. output_path .. '/train.csv')
 os.execute('cp ' .. path .. '/test.csv ' .. output_path .. '/test.csv')
 os.execute('cp ' .. path .. '/valid.csv ' .. output_path .. '/valid.csv')
-print('train, test, and valid has been copied.')
+print('train, test, and valid has been copied. \n')
 
 -- Convert the nets
+print('Converting networks:')
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
 
