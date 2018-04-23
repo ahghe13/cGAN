@@ -15,8 +15,10 @@ function Forward_netD(netD, dataSet, cs)
 	local netData = cloneTable(dataSet)
 	local paths = PopCol(netData, 1)
 	local target_output = torch.cat(torch.Tensor(#paths):fill(1), torch.Tensor(netData), 2)
+print('loading images...')
 	local imgs = LoadImgs(paths, cs, 'minusone2one')
-	local output = netD:forward(imgs)
+print('images loaded. Now, forwarding them in netD')
+	local output = netD:forward(dataSet)
 	return target_output, output
 end
 
@@ -52,9 +54,8 @@ function Nets2Table(netspaths)
 	return sorted_nets
 end
 
-function MSE(netD, data, cs)
-	local tar, out = Forward_netD(netD, data, cs)
-
+function MSE(netD, data, tar)
+	local out = netD:forward(data)
 	local out = Remove_col(out, 1)
 	local tar = Remove_col(tar, 1)
 
@@ -84,6 +85,11 @@ function Load_Data(dataSet, cs, normalize)
 	return LoadImgs(paths, cs, normalize), data
 end
 
+function Load_Target(dataSet)
+        local netData = cloneTable(dataSet)
+        PopCol(netData, 1)
+        return torch.cat(torch.Tensor(#paths):fill(1), torch.Tensor(netData), 2)
+end
 
 --################### CHOOSE EVALUATION METHOD ####################--
 
@@ -99,7 +105,7 @@ methods = {
 --#################### SORT NETS INTO TABLE #######################--
 
 --nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
-nets_dir_path = '/home/ahghe13/Networks'
+nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
@@ -123,13 +129,22 @@ parameters = {'Epoch', 'Generator_path', 'Descriminator_path'}
 --                              MSE                                --
 
 if methods.mse == 1 then
-	io.write('Computing MSE... '):flush()
+	print('Computing MSE')
+--	io.write('Computing MSE... '):flush()
 	table.insert(parameters, 'MSE (test)')
 	table.insert(parameters, 'MSE (valid)')
+	local test_data = Load_Data(test, opt.cs)
+	local test_target = Load_Target(test)
+	local valid_data = Load_Data(valid, opt.cs)
+	local valid_target = Load_Target(valid)
+
 	for i=1,table.getn(evaluation) do
+print('Loading network ' .. i .. ': ' .. evaluation[i][3])
 		netD = torch.load(evaluation[i][3])
-		table.insert(evaluation[i], MSE(netD, test, opt.cs))
-		table.insert(evaluation[i], MSE(netD, valid, opt.cs))
+print('Computing MSE using test set')
+		table.insert(evaluation[i], MSE(netD, test_data, test_target))
+print('Computing MSE using valid set')
+		table.insert(evaluation[i], MSE(netD, valid_data, valid_target))
 	end
 	print('Done!')
 end

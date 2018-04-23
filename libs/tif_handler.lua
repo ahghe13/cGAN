@@ -28,11 +28,15 @@ end
 
 function LoadImgs(paths, channels, normalize)
 	-- Loads multiple images at once using paths in a table
+print('loading first image: ' .. paths[1])
 	local img = load_tif(paths[1], channels, normalize)
+print('loaded.')
 	local imgs = torch.Tensor(#paths, #channels, img:size(2), img:size(3))
 	imgs[1] = img:clone()
+print('image tensor created.')
 	for i=2,#paths do
 		imgs[i] = load_tif(paths[i], channels, normalize)
+print('image ' .. i .. ' loaded of ' .. #paths)
 	end
 	return imgs
 end
