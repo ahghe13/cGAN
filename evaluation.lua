@@ -55,9 +55,12 @@ function Nets2Table(netspaths)
 end
 
 function MSE(netD, data, tar)
+print('Forwarding data')
 	local out = netD:forward(data)
 	local out = Remove_col(out, 1)
-	local tar = Remove_col(tar, 1)
+--	local tar = Remove_col(tar, 1)
+print(out)
+print(tar)
 
 	local mse = nn.MSECriterion()
 	return mse:forward(tar, out)
@@ -82,30 +85,33 @@ function Load_Data(dataSet, cs, normalize)
 	local normalize = normalize or 'minusone2one' 
 	local data = cloneTable(dataSet)
 	local paths = PopCol(data, 1)
-	return LoadImgs(paths, cs, normalize), data
+	return LoadImgs(paths, cs, normalize)
 end
 
 function Load_Target(dataSet)
-        local netData = cloneTable(dataSet)
-        PopCol(netData, 1)
-        return torch.cat(torch.Tensor(#paths):fill(1), torch.Tensor(netData), 2)
+	-- Takes table as input (w. paths and class-values),
+	-- converts the class-values to a tensor,
+	-- and adds a one to the first column
+    local netData = cloneTable(dataSet)
+    PopCol(netData, 1)
+    return torch.cat(torch.Tensor(#paths):fill(1), torch.Tensor(netData), 2)
 end
 
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 1,
+	mse = 0,
 	generate_images = 0,
 	transfer_function_analysis_fake = 0,
-	transfer_function_analysis_real = 0
+	transfer_function_analysis_real = 1
 
 }
 
 
 --#################### SORT NETS INTO TABLE #######################--
 
---nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
-nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
+nets_dir_path = '/home/ag/Desktop/Networks_full_size_all_cs'
+--nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
@@ -119,6 +125,7 @@ test = CSV2Table(nets_dir_path .. '/test.csv')
 table.remove(test, 1)
 valid = CSV2Table(nets_dir_path .. '/valid.csv')
 table.remove(valid, 1)
+print(opt)
 if opt.gpu > 0 then; require 'cunn'; end
 
 
@@ -170,7 +177,7 @@ end
 
 --             TRANSFER FUNCTION ANALYSIS - FAKE IMAGES            --
 
-if methods.transfer_function_analysis_fake == 1 then 
+if methods.transfer_function_analysis_fake == 1 then
 	io.write('Transfer function analysis with fake image... '):flush()
 	trans_path = nets_dir_path .. '/Transfer_function_Fake/'
 	paths.mkdir(trans_path)
@@ -212,9 +219,12 @@ if methods.transfer_function_analysis_real == 1 then
 	io.write('Transfer function analysis with real images... '):flush()
 	trans_path = nets_dir_path .. '/Transfer_function_Real/'
 	paths.mkdir(trans_path)
-	local data_batch, class = Load_Data(test, opt.cs)
+	local data_batch = Load_Data(test, opt.cs)
+	local class = Load_Target(test)
+	Remove_col(class, 1)
 
 	for i=1,table.getn(evaluation) do
+		i = i + 15
 		local output = {'image_gt', 'image_p'}
 		for i=1,table.getn(opt.classes) do
 			table.insert(output, opt.classes[i] .. '_gt')
@@ -224,12 +234,11 @@ if methods.transfer_function_analysis_real == 1 then
 		netG = torch.load(evaluation[i][2])
 		netD = torch.load(evaluation[i][3])
 		local outputD = netD:forward(data_batch)
-
 		for i=1,data_batch:size(1) do
 			local output_tmp = {0, outputD[i][1]}
-			for j=1,table.getn(class[1]) do
+			for j=1,class:size(2) do
 				table.insert(output_tmp, class[i][j])
-				table.insert(output_tmp, outputD[i][j+1])
+				table.insert(output_tmp, outputD[i][j])
 			end
 			table.insert(output, output_tmp)
 		end
