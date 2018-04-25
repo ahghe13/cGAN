@@ -58,16 +58,14 @@ function MSE(netD, data, tar)
 print('Forwarding data')
 	local out = netD:forward(data)
 	local out = Remove_col(out, 1)
---	local tar = Remove_col(tar, 1)
-print(out)
-print(tar)
+	local tar = Remove_col(tar, 1)
 
 	local mse = nn.MSECriterion()
 	return mse:forward(tar, out)
 end
 
 function Generate_data(netG, batch, opt)
-	local inputG = torch.Tensor(batch, opt.nz + table.getn(opt.classes), 1, 1)
+	local noise_and_class = torch.Tensor(batch, opt.nz + table.getn(opt.classes), 1, 1)
 	local noise = torch.Tensor(batch, opt.nz, 1, 1)
 	local class = torch.Tensor(batch, table.getn(opt.classes))
 
@@ -75,34 +73,63 @@ function Generate_data(netG, batch, opt)
 	elseif opt.noise_type == 'uniform_zero2one' then; noise:uniform(0,1)
 	elseif opt.noise_type == 'uniform_minusone2one' then; noise:uniform(-1,1); end
 	class:select(2,1):uniform(0,1)
-	class:select(2,2):fill(0)
-	inputG = torch.cat(noise, class, 2)
-	return netG:forward(inputG), class
+	class:select(2,2):fill(0)	-- OBS!!!!!!!!! THIS IS FOR TEST CLASS IN THE MINI GAN ONLY
+	noise_and_class = torch.cat(noise, class:clone(), 2)
+	return netG:forward(noise_and_class), Cat_vector(class, 0)
 end
 
 function Load_Data(dataSet, cs, normalize)
-	-- Loads data from table's first column
+	-- Loads images from table's first column
+	-- and class-values from the other columns
 	local normalize = normalize or 'minusone2one' 
 	local data = cloneTable(dataSet)
 	local paths = PopCol(data, 1)
-	return LoadImgs(paths, cs, normalize)
+	return LoadImgs(paths, cs, normalize), Load_Target(dataSet)
 end
 
 function Load_Target(dataSet)
 	-- Takes table as input (w. paths and class-values),
 	-- converts the class-values to a tensor,
 	-- and adds a one to the first column
-    local netData = cloneTable(dataSet)
-    PopCol(netData, 1)
-    return torch.cat(torch.Tensor(#paths):fill(1), torch.Tensor(netData), 2)
+	local class_values = cloneTable(dataSet)
+	PopCol(class_values,1)
+	class_values = torch.Tensor(class_values)
+	class_values_and_one_vector = Cat_vector(class_values, 1)
+    return class_values_and_one_vector
+end
+
+function Cat_vector(tensor, vector_value)
+	local vector = torch.Tensor(tensor:size(1)):fill(vector_value)
+	local tensor_and_vector = torch.cat(vector, tensor, 2)
+	return tensor_and_vector
+end
+
+function Generate_first_row(names_of_classes)
+	local output = {'image_gt', 'image_p'}
+	for i=1,table.getn(opt.classes) do
+		table.insert(output, names_of_classes[i] .. '_gt')
+		table.insert(output, names_of_classes[i] .. '_p')
+	end
+	return {output}
+end
+
+function merge_tensors(t1, t2)
+	local length = t1:size(1)
+	local width = t1:size(2)
+	local t = torch.Tensor(length, width*2)
+	for i=1,width do
+		t:select(2, i*2-1):copy(t1:select(2,i))
+		t:select(2, i*2):copy(t2:select(2,i))
+	end
+	return t
 end
 
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 0,
-	generate_images = 0,
-	transfer_function_analysis_fake = 0,
+	mse = 1,
+	generate_images = 1,
+	transfer_function_analysis_fake = 1,
 	transfer_function_analysis_real = 1
 
 }
@@ -110,7 +137,8 @@ methods = {
 
 --#################### SORT NETS INTO TABLE #######################--
 
-nets_dir_path = '/home/ag/Desktop/Networks_full_size_all_cs'
+--nets_dir_path = '/home/ag/Desktop/Networks_full_size_all_cs'
+nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
 --nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
@@ -126,7 +154,6 @@ table.remove(test, 1)
 valid = CSV2Table(nets_dir_path .. '/valid.csv')
 table.remove(valid, 1)
 print(opt)
-if opt.gpu > 0 then; require 'cunn'; end
 
 
 --######### APPLY EVALUATION METHODS FOR DESCRIMINATOR ############--
@@ -178,35 +205,27 @@ end
 --             TRANSFER FUNCTION ANALYSIS - FAKE IMAGES            --
 
 if methods.transfer_function_analysis_fake == 1 then
+
 	io.write('Transfer function analysis with fake image... '):flush()
 	trans_path = nets_dir_path .. '/Transfer_function_Fake/'
 	paths.mkdir(trans_path)
 
-	local batch = 100
+	local batch_size = 100
 
 	for i=1,table.getn(evaluation) do
-		local output = {'image_gt', 'image_p'}
-		for i=1,table.getn(opt.classes) do
-			table.insert(output, opt.classes[i] .. '_gt')
-			table.insert(output, opt.classes[i] .. '_p')
-		end
-		output = {output}
 		netG = torch.load(evaluation[i][2])
 		netD = torch.load(evaluation[i][3])
-		local data_batch, class = Generate_data(netG, batch, opt)
+
+		local data_batch, class = Generate_data(netG, batch_size, opt)
+
 		local outputD = netD:forward(data_batch)
 
-		for i=1,batch do
-			local output_tmp = {0, outputD[i][1]}
-			for j=1,class:size(2) do
-				table.insert(output_tmp, class[i][j])
-				table.insert(output_tmp, outputD[i][j+1])
-			end
-			table.insert(output, output_tmp)
-		end
+		local result = merge_tensors(class, outputD)
+		local result_table = Tensor2Table(result)
 
 		local output_file = trans_path .. 'Epoch' .. i .. '.csv'
-		Table2CSV(output, output_file, 'w')
+		Table2CSV(Generate_first_row(opt.classes), output_file, 'w')
+		Table2CSV(result_table, output_file, 'a')
 	end
 
 	print('Done!')
@@ -217,34 +236,23 @@ end
 if methods.transfer_function_analysis_real == 1 then
 
 	io.write('Transfer function analysis with real images... '):flush()
+	-- Make directory
 	trans_path = nets_dir_path .. '/Transfer_function_Real/'
 	paths.mkdir(trans_path)
-	local data_batch = Load_Data(test, opt.cs)
-	local class = Load_Target(test)
-	Remove_col(class, 1)
+
+	local data_batch, class = Load_Data(test, opt.cs)
 
 	for i=1,table.getn(evaluation) do
-		i = i + 15
-		local output = {'image_gt', 'image_p'}
-		for i=1,table.getn(opt.classes) do
-			table.insert(output, opt.classes[i] .. '_gt')
-			table.insert(output, opt.classes[i] .. '_p')
-		end
-		output = {output}
-		netG = torch.load(evaluation[i][2])
 		netD = torch.load(evaluation[i][3])
+
 		local outputD = netD:forward(data_batch)
-		for i=1,data_batch:size(1) do
-			local output_tmp = {0, outputD[i][1]}
-			for j=1,class:size(2) do
-				table.insert(output_tmp, class[i][j])
-				table.insert(output_tmp, outputD[i][j])
-			end
-			table.insert(output, output_tmp)
-		end
+
+		local result = merge_tensors(class, outputD)
+		local result_table = Tensor2Table(result)
 
 		local output_file = trans_path .. 'Epoch' .. i .. '.csv'
-		Table2CSV(output, output_file, 'w')
+		Table2CSV(Generate_first_row(opt.classes), output_file, 'w')
+		Table2CSV(result_table, output_file, 'a')
 	end
 
 	print('Done!')

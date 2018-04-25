@@ -45,3 +45,14 @@ function SplitTable(tab, portions)
 	end
 	return p
 end
+
+function Tensor2Table(tensor)
+	local tab = {}
+	for i=1,tensor:size(1) do
+		tab[i] = {}
+		for j=1,tensor:size(2) do
+			tab[i][j] = tensor[i][j]
+		end
+	end
+	return tab
+end

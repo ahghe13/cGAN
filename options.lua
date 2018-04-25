@@ -1,6 +1,6 @@
 --######################## GAN TYPE ########################--
 
-net_type = 'full_size'			-- Choose between 'mini_size' or 'full_size'
+net_type = 'mini_size'			-- Choose between 'mini_size' or 'full_size'
 
 
 --################# OPTIONS FOR MINI_GAN ###################--
@@ -14,7 +14,7 @@ opt_mini_size = {
 	batchSize = 12,			-- Batch Size
 	imDim = 4,				-- Dimension of the image
 	cs = {0,1,2},			-- Channel select
-	nz = 100,				-- Number of noise elements passed to generator
+	nz = 10000,				-- Number of noise elements passed to generator
 	ngf = 4,				-- Number of generator filters in the first layer
 	ndf = 4,				-- Number of descriminator filters in the first layer
 	ne = 50,				-- Number of evaluation iterations
