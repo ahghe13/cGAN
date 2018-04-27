@@ -2,13 +2,17 @@ require 'torch'
 require 'nn'
 require 'image'
 
-function generate(netG, nrows, ncols, number_of_classes)
-	nimages = nrows*ncols
-	noise_dim = netG:get(1).nInputPlane
-	noise = torch.randn(nimages, noise_dim, 1, 1)
-	for i=1,number_of_classes do; noise:select(2, noise_dim-i+1):uniform(0,1); end
+function generate_noise_c(noise_c_dim, number_of_classes, batch_size)
+	local noise = torch.randn(batch_size, noise_c_dim-number_of_classes, 1, 1)
+	local class = torch.Tensor(batch_size, number_of_classes, 1, 1):uniform(0,1)
+	local noise_c = torch.cat(noise, class, 2)
+	return noise_c, class, noise
+end
 
-	imgs = netG:forward(noise)
+function generate(netG, nrows, ncols, number_of_classes)
+	local nimages = nrows*ncols
+	local noise_c = generate_noise_c(netG:get(1).nInputPlane, number_of_classes, nimages)
+	imgs = netG:forward(noise_c)
 	return arrange(imgs, nrows, ncols)
 end
 

@@ -38,18 +38,19 @@ function Train(G, D, trainData, opt, e)
    local total_tm = torch.Timer()
 
    if opt.gpu > 0 then
-   require 'cunn'
-   cutorch.setDevice(opt.gpu)
-   inputD = inputD:cuda(); inputG = inputG:cuda();  noise = noise:cuda();  labels = labels:cuda(); label = label:cuda(); class = class:cuda()
+      require 'cunn'
+      cutorch.setDevice(opt.gpu)
+      inputD = inputD:cuda(); inputG = inputG:cuda();  noise = noise:cuda();
+      labels = labels:cuda(); label = label:cuda(); class = class:cuda();
 
-   if pcall(require, 'cudnn') then
-      require 'cudnn'
-      cudnn.benchmark = true
-      cudnn.convert(G, cudnn)
-      cudnn.convert(D, cudnn)
-   end
-   D:cuda();           G:cuda();           criterion:cuda()
-   print('GPU activated!')
+      if pcall(require, 'cudnn') then
+         require 'cudnn'
+         cudnn.benchmark = true
+         cudnn.convert(G, cudnn)
+         cudnn.convert(D, cudnn)
+      end
+      D:cuda();           G:cuda();           criterion:cuda()
+      print('GPU activated!')
    end
 
    local fDx = function(x)

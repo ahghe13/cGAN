@@ -64,18 +64,11 @@ print('Forwarding data')
 	return mse:forward(tar, out)
 end
 
-function Generate_data(netG, batch, opt)
-	local noise_and_class = torch.Tensor(batch, opt.nz + table.getn(opt.classes), 1, 1)
-	local noise = torch.Tensor(batch, opt.nz, 1, 1)
-	local class = torch.Tensor(batch, table.getn(opt.classes))
-
-	if opt.noise_type == 'gaussian' then; noise:normal()
-	elseif opt.noise_type == 'uniform_zero2one' then; noise:uniform(0,1)
-	elseif opt.noise_type == 'uniform_minusone2one' then; noise:uniform(-1,1); end
-	class:select(2,1):uniform(0,1)
-	class:select(2,2):fill(0)	-- OBS!!!!!!!!! THIS IS FOR TEST CLASS IN THE MINI GAN ONLY
-	noise_and_class = torch.cat(noise, class:clone(), 2)
-	return netG:forward(noise_and_class), Cat_vector(class, 0)
+function Generate_data(netG, batch_size, number_of_classes)
+	local noise_c, class = generate_noise_c(netG:get(1).nInputPlane, number_of_classes, batch_size)
+	local generated_imgs = netG:forward(noise_c)
+	local classes = Cat_vector(class, 0)
+	return generated_imgs, classes
 end
 
 function Load_Data(dataSet, cs, normalize)
@@ -137,7 +130,7 @@ methods = {
 
 --#################### SORT NETS INTO TABLE #######################--
 
---nets_dir_path = '/home/ag/Desktop/Networks_full_size_all_cs'
+--nets_dir_path = '/home/ag/Desktop/Networks02_nonCuda'
 nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
 --nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
@@ -216,7 +209,7 @@ if methods.transfer_function_analysis_fake == 1 then
 		netG = torch.load(evaluation[i][2])
 		netD = torch.load(evaluation[i][3])
 
-		local data_batch, class = Generate_data(netG, batch_size, opt)
+		local data_batch, class = Generate_data(netG, batch_size, table.getn(opt.classes))
 
 		local outputD = netD:forward(data_batch)
 

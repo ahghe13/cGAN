@@ -7,7 +7,7 @@ net_type = 'mini_size'			-- Choose between 'mini_size' or 'full_size'
 
 opt_mini_size = {
 	net_name = 'mini_cGAN',
-	data_info = '/home/ag/Dropbox/Uni/Master thesis/Software/Data/Mini_cGAN1/data_info1.csv',
+	data_info = '/home/ag/Dropbox/Uni/Master thesis/Software/Data/Mini_cGAN1/data_info.csv',
 	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 20,				-- Training Epochs
