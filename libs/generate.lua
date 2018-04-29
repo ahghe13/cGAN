@@ -12,7 +12,7 @@ end
 function generate(netG, nrows, ncols, number_of_classes)
 	local nimages = nrows*ncols
 	local noise_c = generate_noise_c(netG:get(1).nInputPlane, number_of_classes, nimages)
-	imgs = netG:forward(noise_c)
+	local imgs = netG:forward(noise_c)
 	return arrange(imgs, nrows, ncols)
 end
 

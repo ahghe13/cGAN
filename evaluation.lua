@@ -120,18 +120,18 @@ end
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 1,
+	mse = 0,
 	generate_images = 1,
-	transfer_function_analysis_fake = 1,
-	transfer_function_analysis_real = 1
+	transfer_function_analysis_fake = 0,
+	transfer_function_analysis_real = 0
 
 }
 
 
 --#################### SORT NETS INTO TABLE #######################--
 
---nets_dir_path = '/home/ag/Desktop/Networks02_nonCuda'
-nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
+--nets_dir_path = '/home/ag/Desktop/Networks03_nonCuda'
+nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks_all_data_64x64'
 --nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
@@ -182,9 +182,12 @@ if methods.generate_images == 1 then
 	gen_path = nets_dir_path .. '/Generated_images/'
 	paths.mkdir(gen_path)
 
+	local row, col = 5, 10
+	generator_batch_size = row*col
+
 	for i=1,table.getn(evaluation) do
 		netG = torch.load(evaluation[i][2])
-		im = generate(netG, 5, 10, table.getn(opt.classes))
+		im = generate(netG, row, col, table.getn(opt.classes))
 		if opt.net_name == 'mini_cGAN' then
 			im = image.scale(im, 2000,1000, 'simple')
 			image.save(gen_path .. File_name(evaluation[i][2]):sub(1,-4) .. '.jpg', im)
@@ -192,6 +195,21 @@ if methods.generate_images == 1 then
 			save_tif(gen_path .. File_name(evaluation[i][2]):sub(1,-4) .. '.tif', im)
 		end
 	end
+
+	local real_imgs_table = cloneTable(valid)
+	while table.getn(real_imgs_table) > generator_batch_size do
+		table.remove(real_imgs_table)
+	end
+	local real_imgs = LoadImgs(PopCol(real_imgs_table, 1), opt.cs, 'minusone2one')
+	local im = arrange(real_imgs, row, col)
+	if opt.net_name == 'mini_cGAN' then
+		im = image.scale(im, 2000,1000, 'simple')
+		image.save(gen_path .. 'real' .. '.jpg', im)
+	else 
+		save_tif(gen_path .. 'real' .. '.tif', im)
+	end
+
+
 	print('Done!')
 end
 

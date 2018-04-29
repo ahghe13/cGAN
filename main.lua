@@ -29,9 +29,9 @@ torch.manualSeed(79)
 dataTable = CSV2Table(opt.data_info); opt.classes = cloneTable(dataTable[1])
 
 -- Save classes to train, test, and valid files
-Table2CSV({opt.classes}, opt.save_nets_path .. 'train.csv')
-Table2CSV({opt.classes}, opt.save_nets_path .. 'test.csv')
-Table2CSV({opt.classes}, opt.save_nets_path .. 'valid.csv')
+Table2CSV({opt.classes}, opt.save_nets_path .. '/train.csv')
+Table2CSV({opt.classes}, opt.save_nets_path .. '/test.csv')
+Table2CSV({opt.classes}, opt.save_nets_path .. '/valid.csv')
 
 -- Remove first row to only include data; Remove first col of classes, which is file path
 table.remove(dataTable, 1); table.remove(opt.classes, 1)

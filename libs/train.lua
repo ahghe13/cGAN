@@ -61,10 +61,11 @@ function Train(G, D, trainData, opt, e)
       class:copy(class_tmp)
       inputD:copy(real)
       label:fill(real_label)
-      labels = torch.cat(label, class, 2)
+
+      if data:getClasses() > 0 then; labels = torch.cat(label, class, 2); else; labels:copy(label); end;
+      -- labels = torch.cat(label, class, 2)
 
       local output = D:forward(inputD)
-
       local errD_real = criterion:forward(output, labels)
       local df_do = criterion:backward(output, labels)
       D:backward(inputD, df_do)
@@ -74,12 +75,14 @@ function Train(G, D, trainData, opt, e)
       elseif opt.noise_type == 'uniform_zero2one' then; noise:uniform(0,1)
       elseif opt.noise_type == 'uniform_minusone2one' then; noise:uniform(-1,1); end
       class:uniform(0,1)
-      inputG = torch.cat(noise, class, 2)
+      if data:getClasses() > 0 then; inputG = torch.cat(noise, class, 2); else; inputG:copy(noise); end;
+      -- inputG = torch.cat(noise, class, 2)
 
       local fake = G:forward(inputG)
       inputD:copy(fake)
       label:fill(fake_label)
-      labels = torch.cat(label, class, 2)
+      if data:getClasses() > 0 then; labels = torch.cat(label, class, 2); else; labels = label; end;
+      -- labels = torch.cat(label, class, 2)
 
       local output = D:forward(inputD)
       local errD_fake = criterion:forward(output, labels)
@@ -100,7 +103,8 @@ function Train(G, D, trainData, opt, e)
       local fake = netG:forward(noise)
       input:copy(fake) ]]--
       label:fill(real_label) -- fake labels are real for generator cost
-      labels = torch.cat(label, class, 2)
+      if data:getClasses() > 0 then; labels = torch.cat(label, class, 2); else; labels:copy(label); end;
+--      labels = torch.cat(label, class, 2)
 
       local output = D.output -- netD:forward(input) was already executed in fDx, so save computation
       errG = criterion:forward(output, labels)
