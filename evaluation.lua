@@ -148,6 +148,7 @@ valid = CSV2Table(nets_dir_path .. '/valid.csv')
 table.remove(valid, 1)
 print(opt)
 
+if opt.gpu > 0 then; require 'cunn'; end;
 
 --######### APPLY EVALUATION METHODS FOR DESCRIMINATOR ############--
 
