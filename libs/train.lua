@@ -40,13 +40,13 @@ function Train(G, D, trainData, opt, e)
    if opt.gpu > 0 then
       require 'cunn'
       cutorch.setDevice(opt.gpu)
-      noise = noise:cuda(); class = class:cuda();
-      labels = labels:cuda(); label = label:cuda();
+      noise = noise:cuda(); class = class:cuda(); label = label:cuda(); labels = labels:cuda();
       inputD = inputD:cuda(); inputG = inputG:cuda();
       D:cuda(); G:cuda();
       criterion:cuda()
       print('GPU activated!')
    end
+
 
    local fDx = function(x)
       gradParametersD:zero()
