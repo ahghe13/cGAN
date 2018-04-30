@@ -130,9 +130,9 @@ methods = {
 
 --#################### SORT NETS INTO TABLE #######################--
 
-nets_dir_path = '/home/ag/Desktop/Networks05'
---nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
---nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
+nets_dir_path = arg[1] or '/home/ag/Desktop/Networks05'
+--nets_dir_path = arg[1] or '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
+--nets_dir_path = arg[1] or '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')

@@ -63,6 +63,10 @@ Train(netG, netD, train, opt, opt.epochs)
 
 --######################## EVALUATION ########################--
 
+arg = {opt.save_nets_path}; dofile('evaluation.lua');
+
+--######################## CONVERSION ########################--
+
 -- Converts nets if cuda was used
 if opt.gpu > 0 then
 	nonCuda_path = opt.save_nets_path .. '/nonCuda/'
