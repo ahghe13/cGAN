@@ -1,6 +1,6 @@
 --######################## GAN TYPE ########################--
 
-net_type = 'full_size'			-- Choose between 'mini_size' or 'full_size'
+net_type = 'mini_size'			-- Choose between 'mini_size' or 'full_size'
 
 
 --################# OPTIONS FOR MINI_GAN ###################--
@@ -10,7 +10,7 @@ opt_mini_size = {
 	data_info = '/home/ag/Dropbox/Uni/Master thesis/Software/Data/Mini_cGAN1/data_info.csv',
 	trainP = 80, testP = 10, validP = 10,
 
-	epochs = 30,				-- Training Epochs
+	epochs = 10,				-- Training Epochs
 	batchSize = 12,			-- Batch Size
 	imDim = 4,				-- Dimension of the image
 	cs = {0,1,2},			-- Channel select

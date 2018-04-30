@@ -130,8 +130,8 @@ methods = {
 
 --#################### SORT NETS INTO TABLE #######################--
 
---nets_dir_path = '/home/ag/Desktop/Networks03_nonCuda'
-nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks_all_data_64x64'
+nets_dir_path = '/home/ag/Desktop/Networks05'
+--nets_dir_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
 --nets_dir_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
@@ -175,6 +175,7 @@ print('Computing MSE using valid set')
 	end
 	print('Done!')
 end
+
 --                         GENERATE IMAGES                         --
 
 if methods.generate_images == 1 then
@@ -187,6 +188,7 @@ if methods.generate_images == 1 then
 
 	for i=1,table.getn(evaluation) do
 		netG = torch.load(evaluation[i][2])
+
 		im = generate(netG, row, col, table.getn(opt.classes))
 		if opt.net_name == 'mini_cGAN' then
 			im = image.scale(im, 2000,1000, 'simple')

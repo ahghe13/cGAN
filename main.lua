@@ -62,6 +62,15 @@ elseif net_type == 'full_size' then; netG, netD = networks(opt); end
 Train(netG, netD, train, opt, opt.epochs)
 
 --######################## EVALUATION ########################--
+
+-- Converts nets if cuda was used
+if opt.gpu > 0 then
+	nonCuda_path = opt.save_nets_path .. '/nonCuda/'
+	paths.mkdir(nonCuda_path)
+	arg = {'fromCuda', opt.save_nets_path, nonCuda_path}
+	dofile('convert.lua')
+end
+
 --[[
 
 c = nn.MSECriterion()

@@ -18,7 +18,7 @@ function Train(G, D, trainData, opt, e)
 
    local fake_label = 0
    local real_label = 1
-   local inputD = torch.Tensor(opt.batchSize, #opt.cs, opt.imDim, opt.imDim)
+   local inputD = torch.Tensor(opt.batchSize, table.getn(opt.cs), opt.imDim, opt.imDim)
 
    local inputG = torch.Tensor(opt.batchSize, opt.nz + data:getClasses(), 1, 1)
    local noise = torch.Tensor(opt.batchSize, opt.nz, 1, 1)
@@ -40,16 +40,11 @@ function Train(G, D, trainData, opt, e)
    if opt.gpu > 0 then
       require 'cunn'
       cutorch.setDevice(opt.gpu)
-      inputD = inputD:cuda(); inputG = inputG:cuda();  noise = noise:cuda();
-      labels = labels:cuda(); label = label:cuda(); class = class:cuda();
-
-      if pcall(require, 'cudnn') then
-         require 'cudnn'
-         cudnn.benchmark = true
-         cudnn.convert(G, cudnn)
-         cudnn.convert(D, cudnn)
-      end
-      D:cuda();           G:cuda();           criterion:cuda()
+      noise = noise:cuda(); class = class:cuda();
+      labels = labels:cuda(); label = label:cuda();
+      inputD = inputD:cuda(); inputG = inputG:cuda();
+      D:cuda(); G:cuda();
+      criterion:cuda()
       print('GPU activated!')
    end
 

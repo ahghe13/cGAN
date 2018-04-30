@@ -9,6 +9,15 @@ convert = 'fromCuda' -- choose between 'toCuda' or 'fromCuda'
 path = '/scratch/sdubats/ahghe13/Networks01'
 output_path = '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
+convert = arg[1] or convert
+path = arg[2] or path
+output_path = arg[3] or output_path
+
+print(convert)
+print(path)
+print(output_path)
+
+
 -- Modify opt
 opt = torch.load(path .. '/opt.t7')
 if convert == 'toCuda' then; opt.gpu = 1; end
