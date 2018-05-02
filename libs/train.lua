@@ -16,6 +16,15 @@ end
 function Train(G, D, trainData, opt, e)
    data = Data:create(trainData, opt.batchSize, opt.cs)
 
+   optimStateG = {
+      learningRate = 0.0002,
+      beta1 = 0.5,
+   }
+   optimStateD = {
+      learningRate = 0.0002,
+      beta1 = 0.5,
+   }
+
    local fake_label = 0
    local real_label = 1
    local inputD = torch.Tensor(opt.batchSize, table.getn(opt.cs), opt.imDim, opt.imDim)
@@ -29,8 +38,6 @@ function Train(G, D, trainData, opt, e)
 
    local errD, errG
 
-   local parametersD, gradParametersD = D:getParameters()
-   local parametersG, gradParametersG = G:getParameters()
    local criterion = nn.BCECriterion()
 
    local epoch_tm = torch.Timer()
@@ -47,6 +54,8 @@ function Train(G, D, trainData, opt, e)
       print('GPU activated!')
    end
 
+   local parametersD, gradParametersD = D:getParameters()
+   local parametersG, gradParametersG = G:getParameters()
 
    local fDx = function(x)
       gradParametersD:zero()
