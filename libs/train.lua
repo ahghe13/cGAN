@@ -12,17 +12,16 @@ function round(num, numDecimalPlaces)
   return math.floor(num + 0.5)
 end
 
-
 function Train(G, D, trainData, opt, e)
    data = Data:create(trainData, opt.batchSize, opt.cs)
 
    optimStateG = {
-      learningRate = 0.0002,
-      beta1 = 0.5,
+      learningRate = opt.learningRate,
+      beta1 = opt.beta1,
    }
    optimStateD = {
-      learningRate = 0.0002,
-      beta1 = 0.5,
+      learningRate = opt.learningRate,
+      beta1 = opt.beta1,
    }
 
    local fake_label = 0
@@ -133,16 +132,16 @@ function Train(G, D, trainData, opt, e)
          optim.adam(fDx, parametersD, optimStateD)
          optim.adam(fGx, parametersG, optimStateG)
          print("Epoch " .. epoch .. " (" .. j .. "/" .. totalBatches .. ")", 
-            "Itr time: " .. round(itr_tm:time().real, 4),
-            "Total time: " .. round(total_tm:time().real, 4))
+            "Itr time: " .. round(itr_tm:time().real, 4) .. "s",
+            "Total time: " .. round(total_tm:time().real, 4) .. "s",
+            "errD: " .. round(errD, 4), "errG: " .. round(errG,4))
       end
 
       data:shuffle()
 
       if opt.display == true then
-         print("Epoch " .. epoch .. " successfully completed!")
-         print("Descriminator Error: " .. errD, "Generator Error: " .. errG)
-         print("Epoch time: " .. epoch_tm:time().real .. "\n")
+         print("Epoch " .. epoch .. " successfully completed! Epoch time consumption: " 
+            .. round(epoch_tm:time().real, 4) .. "s" .. "\n")
       end
 
       if epoch % opt.save_nets == 0 then
@@ -154,7 +153,7 @@ function Train(G, D, trainData, opt, e)
       epoch = epoch+1
    end
 
-   if opt.display == true then; print(total_tm:time().real); end
+   if opt.display == true then; print('Total time: ' .. total_tm:time().real); end
 
 end
 

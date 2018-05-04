@@ -2,7 +2,7 @@ require 'torch'
 require 'nn'
 require 'cunn'
 
-include('libs/list_files_in_dir.lua')
+include('libs/directory_handling.lua')
 include('libs/paths_handling.lua')
 
 convert = 'fromCuda' -- choose between 'toCuda' or 'fromCuda'

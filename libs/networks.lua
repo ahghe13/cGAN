@@ -8,28 +8,28 @@ function mini_networks(opt)
 	--######################### GENERATOR ########################--
 
 	local netG = nn.Sequential()
-	-- input is Z, going into a convolution
-	netG:add(nn.SpatialFullConvolution(opt.nz + #opt.classes, opt.ngf, 4, 4, 2, 2, 1, 1))
+	-- Input consists of noise vector, z, and class parameter(s)
+	netG:add(nn.SpatialFullConvolution(opt.nz + table.getn(opt.classes), opt.ngf, 4, 4, 2, 2, 1, 1))
 	netG:add(nn.SpatialBatchNormalization(opt.ngf)):add(nn.ReLU(true))
-	-- state size: (ngf*4) x 2 x 2
-	netG:add(nn.SpatialFullConvolution(opt.ngf, #opt.cs, 4, 4, 2, 2, 1, 1))
+	-- State size: (ngf) x 2 x 2
+	netG:add(nn.SpatialFullConvolution(opt.ngf, table.getn(opt.cs), 4, 4, 2, 2, 1, 1))
 	netG:add(nn.Tanh())
-	-- state size: (#cs) x 4 x 4
+	-- state size: (cs) x 4 x 4
 	netG:apply(weights_init)
 
 
 	--####################### DESCRIMINATOR #######################--
 
 	local netD = nn.Sequential()
-	-- input is (#cs) x 4 x 4
-	netD:add(nn.SpatialConvolution(#opt.cs, opt.ndf, 4, 4, 2, 2, 1, 1))
+	-- input is (cs) x 4 x 4
+	netD:add(nn.SpatialConvolution(table.getn(opt.cs), opt.ndf, 4, 4, 2, 2, 1, 1))
 	netD:add(nn.LeakyReLU(0.2, true))
 	-- state size: (ndf) x 2 x 2
-	netD:add(nn.SpatialConvolution(opt.ndf, #opt.classes + 1, 4, 4, 2, 2, 1, 1))
+	netD:add(nn.SpatialConvolution(opt.ndf, table.getn(opt.classes) + 1, 4, 4, 2, 2, 1, 1))
 	netD:add(nn.Sigmoid())
-	-- state size: 1 x 1 x 2
-	netD:add(nn.View(#opt.classes + 1):setNumInputDims(3))
-	-- state size: 2
+	-- state size: (classes + 1) x 1 x 1
+	netD:add(nn.View(table.getn(opt.classes) + 1):setNumInputDims(3))
+	-- state size: (classes + 1)
 
 	netD:apply(weights_init)
 
@@ -41,8 +41,8 @@ function networks(opt)
 	--######################### GENERATOR ########################--
 
 	local netG = nn.Sequential()
-	-- input is Z, going into a convolution
-	netG:add(nn.SpatialFullConvolution(opt.nz + #opt.classes, opt.ngf * 8, 4, 4))
+	-- Input consists of noise vector, z, and class parameter(s)
+	netG:add(nn.SpatialFullConvolution(opt.nz + table.getn(opt.classes), opt.ngf * 8, 4, 4))
 	netG:add(nn.SpatialBatchNormalization(opt.ngf * 8)):add(nn.ReLU(true))
 	-- state size: (ngf*8) x 4 x 4
 	netG:add(nn.SpatialFullConvolution(opt.ngf * 8, opt.ngf * 4, 4, 4, 2, 2, 1, 1))
@@ -54,7 +54,7 @@ function networks(opt)
 	netG:add(nn.SpatialFullConvolution(opt.ngf * 2, opt.ngf, 4, 4, 2, 2, 1, 1))
 	netG:add(nn.SpatialBatchNormalization(opt.ngf)):add(nn.ReLU(true))
 	-- state size: (ngf) x 32 x 32
-	netG:add(nn.SpatialFullConvolution(opt.ngf, #opt.cs, 4, 4, 2, 2, 1, 1))
+	netG:add(nn.SpatialFullConvolution(opt.ngf, table.getn(opt.cs), 4, 4, 2, 2, 1, 1))
 	netG:add(nn.Tanh())
 	-- state size: (cs) x 64 x 64
 
@@ -65,7 +65,7 @@ function networks(opt)
 
 	local netD = nn.Sequential()
 	-- input is (cs) x 64 x 64
-	netD:add(nn.SpatialConvolution(#opt.cs, opt.ndf, 4, 4, 2, 2, 1, 1))
+	netD:add(nn.SpatialConvolution(table.getn(opt.cs), opt.ndf, 4, 4, 2, 2, 1, 1))
 	netD:add(nn.LeakyReLU(0.2, true))
 	-- state size: (ndf) x 32 x 32
 	netD:add(nn.SpatialConvolution(opt.ndf, opt.ndf * 2, 4, 4, 2, 2, 1, 1))
@@ -77,11 +77,11 @@ function networks(opt)
 	netD:add(nn.SpatialConvolution(opt.ndf * 4, opt.ndf * 8, 4, 4, 2, 2, 1, 1))
 	netD:add(nn.SpatialBatchNormalization(opt.ndf * 8)):add(nn.LeakyReLU(0.2, true))
 	-- state size: (ndf * 8) x 4 x 4
-	netD:add(nn.SpatialConvolution(opt.ndf * 8, #opt.classes + 1, 4, 4))
+	netD:add(nn.SpatialConvolution(opt.ndf * 8, table.getn(opt.classes) + 1, 4, 4))
 	netD:add(nn.Sigmoid())
-	-- state size: 1 x 1 x 2
-	netD:add(nn.View(#opt.classes + 1):setNumInputDims(3))
-	-- state size: 2x1
+	-- state size: (classes + 1) x 1 x 1
+	netD:add(nn.View(table.getn(opt.classes) + 1):setNumInputDims(3))
+	-- state size: (classes +1)
 
 	netD:apply(weights_init)
 

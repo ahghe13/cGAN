@@ -2,10 +2,8 @@ require 'torch'
 require 'nn'
 require 'image'
 
-include('libs/list_files_in_dir.lua')
 include('libs/table_handling.lua')
-include('libs/csv_to_table.lua')
-include('libs/tif_handler.lua')
+include('libs/tif_handling.lua')
 include('libs/generate.lua')
 include('libs/image_normalization.lua')
 include('libs/paths_handling.lua')
@@ -15,9 +13,7 @@ function Forward_netD(netD, dataSet, cs)
 	local netData = cloneTable(dataSet)
 	local paths = PopCol(netData, 1)
 	local target_output = torch.cat(torch.Tensor(#paths):fill(1), torch.Tensor(netData), 2)
-print('loading images...')
 	local imgs = LoadImgs(paths, cs, 'minusone2one')
-print('images loaded. Now, forwarding them in netD')
 	local output = netD:forward(dataSet)
 	return target_output, output
 end
@@ -32,7 +28,7 @@ function Remove_col(tensor, idx)
 end
 
 function Nets2Table(netspaths)
-	nets = cloneTable(netspaths)
+	local nets = cloneTable(netspaths)
 	local sorted_nets = {}
 	local e = 9999
 	local prev_e = 0
@@ -55,7 +51,6 @@ function Nets2Table(netspaths)
 end
 
 function MSE(netD, data, tar)
-print('Forwarding data')
 	local out = netD:forward(data)
 	local out = Remove_col(out, 1)
 	local tar = Remove_col(tar, 1)
@@ -117,27 +112,41 @@ function merge_tensors(t1, t2)
 	return t
 end
 
+function Pick_Sample(tab, sample_size)
+	sample = cloneTable(tab)
+	sample = Shuffle(sample)
+	while table.getn(sample) > sample_size do
+		table.remove(sample)
+	end
+	return sample
+end
+
+function Load_Real_Images(dataSet, row, col)
+	local real_imgs_table = Pick_Sample(dataSet, row*col)
+	local real_imgs = LoadImgs(PopCol(real_imgs_table, 1), opt.cs, 'minusone2one')
+	local imgs = arrange(real_imgs, row, col)
+	return imgs
+end
+
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 0,
-	generate_images = 1,
+	mse = 1,
+	generate_images = 0,
 	transfer_function_analysis_fake = 0,
 	transfer_function_analysis_real = 0
-
 }
 
 
 --#################### SORT NETS INTO TABLE #######################--
 
-nets_dir_path = arg[1] or '/home/ag/Desktop/Networks05'
---nets_dir_path = arg[1] or '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
+--nets_dir_path = arg[1] or '/home/ag/Desktop/Networks05'
+nets_dir_path = arg[1] or '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
 --nets_dir_path = arg[1] or '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
-evaluation = Nets2Table(nets_paths)
-
+nets = Nets2Table(nets_paths)
 
 --################# LOAD OPT, TEST, AND VALID #####################--
 
@@ -152,28 +161,28 @@ if opt.gpu > 0 then; require 'cunn'; end;
 
 --######### APPLY EVALUATION METHODS FOR DESCRIMINATOR ############--
 
-parameters = {'Epoch', 'Generator_path', 'Descriminator_path'}
+evaluation_path = nets_dir_path .. '/Evaluation/'
+paths.mkdir(evaluation_path)
+
+Table2CSV({{'Epoch', 'Generator_path', 'Descriminator_path'}}, evaluation_path .. '/Networks.csv')
+Table2CSV(nets, evaluation_path .. '/Networks.csv', 'a')
 
 --                              MSE                                --
 
 if methods.mse == 1 then
-	print('Computing MSE')
---	io.write('Computing MSE... '):flush()
-	table.insert(parameters, 'MSE (test)')
-	table.insert(parameters, 'MSE (valid)')
-	local test_data = Load_Data(test, opt.cs)
-	local test_target = Load_Target(test)
-	local valid_data = Load_Data(valid, opt.cs)
-	local valid_target = Load_Target(valid)
+	io.write('Computing MSE... '):flush()
+	tableMSE = {{'Epoch', 'MSE (test)', 'MSE (valid)'}}
+	local test_data, test_target = Load_Data(test, opt.cs)
+	local valid_data, valid_target = Load_Data(valid, opt.cs)
 
-	for i=1,table.getn(evaluation) do
-print('Loading network ' .. i .. ': ' .. evaluation[i][3])
-		netD = torch.load(evaluation[i][3])
-print('Computing MSE using test set')
-		table.insert(evaluation[i], MSE(netD, test_data, test_target))
-print('Computing MSE using valid set')
-		table.insert(evaluation[i], MSE(netD, valid_data, valid_target))
+	for i=1,table.getn(nets) do
+		local netD = torch.load(nets[i][3])
+		local testMSE = MSE(netD, test_data, test_target)
+		local validMSE = MSE(netD, valid_data, valid_target)
+		table.insert(tableMSE, {nets[i][1], testMSE, validMSE})
 	end
+	Table2CSV(tableMSE, evaluation_path .. '/Mean_square_error.csv')
+
 	print('Done!')
 end
 
@@ -181,35 +190,33 @@ end
 
 if methods.generate_images == 1 then
 	io.write('Generating images... '):flush()
-	gen_path = nets_dir_path .. '/Generated_images/'
+	local gen_path = evaluation_path .. '/Generated_images/'
 	paths.mkdir(gen_path)
 
 	local row, col = 5, 10
-	generator_batch_size = row*col
 
-	for i=1,table.getn(evaluation) do
-		netG = torch.load(evaluation[i][2])
+	for i=1,table.getn(nets) do
+		netG = torch.load(nets[i][2])
 
 		im = generate(netG, row, col, table.getn(opt.classes))
 		if opt.net_name == 'mini_cGAN' then
 			im = image.scale(im, 2000,1000, 'simple')
-			image.save(gen_path .. File_name(evaluation[i][2]):sub(1,-4) .. '.jpg', im)
+			image.save(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.jpg', im)
 		else 
-			save_tif(gen_path .. File_name(evaluation[i][2]):sub(1,-4) .. '.tif', im)
+			save_tif(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.tif', im)
 		end
 	end
 
-	local real_imgs_table = cloneTable(valid)
-	while table.getn(real_imgs_table) > generator_batch_size do
-		table.remove(real_imgs_table)
-	end
-	local real_imgs = LoadImgs(PopCol(real_imgs_table, 1), opt.cs, 'minusone2one')
-	local im = arrange(real_imgs, row, col)
+	local im_test = Load_Real_Images(test, row, col)
+	local im_valid = Load_Real_Images(valid, row, col)
 	if opt.net_name == 'mini_cGAN' then
-		im = image.scale(im, 2000,1000, 'simple')
-		image.save(gen_path .. 'real' .. '.jpg', im)
+		im_test = image.scale(im_test, 2000,1000, 'simple')
+		im_valid = image.scale(im_valid, 2000,1000, 'simple')
+		image.save(gen_path .. 'real_test' .. '.jpg', im_test)
+		image.save(gen_path .. 'real_valid' .. '.jpg', im_valid)
 	else 
-		save_tif(gen_path .. 'real' .. '.tif', im)
+		save_tif(gen_path .. 'real_test' .. '.tif', im_test)
+		save_tif(gen_path .. 'real_valid' .. '.tif', im_valid)
 	end
 
 
@@ -221,14 +228,14 @@ end
 if methods.transfer_function_analysis_fake == 1 then
 
 	io.write('Transfer function analysis with fake image... '):flush()
-	trans_path = nets_dir_path .. '/Transfer_function_Fake/'
+	local trans_path = evaluation_path .. '/Transfer_function_Fake/'
 	paths.mkdir(trans_path)
 
 	local batch_size = 100
 
-	for i=1,table.getn(evaluation) do
-		netG = torch.load(evaluation[i][2])
-		netD = torch.load(evaluation[i][3])
+	for i=1,table.getn(nets) do
+		netG = torch.load(nets[i][2])
+		netD = torch.load(nets[i][3])
 
 		local data_batch, class = Generate_data(netG, batch_size, table.getn(opt.classes))
 
@@ -251,13 +258,13 @@ if methods.transfer_function_analysis_real == 1 then
 
 	io.write('Transfer function analysis with real images... '):flush()
 	-- Make directory
-	trans_path = nets_dir_path .. '/Transfer_function_Real/'
+	local trans_path = evaluation_path .. '/Transfer_function_Real/'
 	paths.mkdir(trans_path)
 
 	local data_batch, class = Load_Data(test, opt.cs)
 
-	for i=1,table.getn(evaluation) do
-		netD = torch.load(evaluation[i][3])
+	for i=1,table.getn(nets) do
+		netD = torch.load(nets[i][3])
 
 		local outputD = netD:forward(data_batch)
 
@@ -271,24 +278,3 @@ if methods.transfer_function_analysis_real == 1 then
 
 	print('Done!')
 end
-
---######################### SAVE RESULTS ##########################--
-
-Table2CSV({parameters}, nets_dir_path .. '/evaluation.csv')
-Table2CSV(evaluation, nets_dir_path .. '/evaluation.csv', 'a')
-
---[[
-
-Evaluation methods
-------------------
-
-
-Generator
-	- Generate images
-	- Image distance?
-
-Descriminator
-	- MSE
-	- 
-
-]]--

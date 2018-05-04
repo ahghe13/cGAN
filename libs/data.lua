@@ -3,7 +3,7 @@ require 'torch'
 require 'image'
 
 include('image_normalization.lua')
-include('tif_handler.lua')
+include('tif_handling.lua')
 include('table_handling.lua')
 
 Data = {}
@@ -40,7 +40,7 @@ function Data:getTotalBatches()
 end
 
 function Data:shuffle()
-	self.dataTable = shuffle(self.dataTable)
+	self.dataTable = Shuffle(self.dataTable)
 	self.index = 1
 end
 
