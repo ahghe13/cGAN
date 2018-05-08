@@ -64,7 +64,6 @@ function Load_Data(dataSet, cs, normalize)
 	local data = cloneTable(dataSet)
 	local paths = PopCol(data, 1)
 	local imgs, tar = LoadImgs(paths, cs, normalize), Load_Target(dataSet)
-	if gpu > 0 then; imgs = imgs:cuda(); tar = tar:cuda(); end
 	return imgs, tar
 end
 
