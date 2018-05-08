@@ -148,10 +148,8 @@ valid = CSV2Table(nets_dir_path .. '/valid.csv')
 table.remove(valid, 1)
 print(opt)
 
-if methods.mse == 1 or methods.transfer_function_analysis_real == 1 then
-	test_data, test_target = Load_Data(test, opt.cs)
-	valid_data, valid_target = Load_Data(valid, opt.cs)
-end
+test_data, test_target = Load_Data(test, opt.cs)
+valid_data, valid_target = Load_Data(valid, opt.cs)
 
 if opt.gpu > 0 then
 	require 'cunn'
