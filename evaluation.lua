@@ -66,13 +66,16 @@ function Generate_data(netG, batch_size, number_of_classes)
 	return generated_imgs, classes
 end
 
-function Load_Data(dataSet, cs, normalize)
+function Load_Data(dataSet, cs, normalize, gpu)
 	-- Loads images from table's first column
 	-- and class-values from the other columns
+	local gpu = gpu or 0
 	local normalize = normalize or 'minusone2one' 
 	local data = cloneTable(dataSet)
 	local paths = PopCol(data, 1)
-	return LoadImgs(paths, cs, normalize), Load_Target(dataSet)
+	local imgs, tar = LoadImgs(paths, cs, normalize), Load_Target(dataSet)
+	if gpu > 0 then; imgs = imgs:cuda(); tar = tar:cuda(); end
+	return imgs, tar
 end
 
 function Load_Target(dataSet)
@@ -172,8 +175,8 @@ Table2CSV(nets, evaluation_path .. '/Networks.csv', 'a')
 if methods.mse == 1 then
 	io.write('Computing MSE... '):flush()
 	tableMSE = {{'Epoch', 'MSE (test)', 'MSE (valid)'}}
-	local test_data, test_target = Load_Data(test, opt.cs)
-	local valid_data, valid_target = Load_Data(valid, opt.cs)
+	local test_data, test_target = Load_Data(test, opt.cs, opt.gpu)
+	local valid_data, valid_target = Load_Data(valid, opt.cs, opt.gpu)
 
 	for i=1,table.getn(nets) do
 		local netD = torch.load(nets[i][3])

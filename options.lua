@@ -10,7 +10,7 @@ opt_mini_size = {
 	data_info = '/home/ag/Dropbox/Uni/Master thesis/Software/Data/Mini_cGAN1/data_info.csv',
 	trainP = 80, testP = 10, validP = 10,
 
-	epochs = 3,				-- Training Epochs
+	epochs = 30,				-- Training Epochs
 	batchSize = 12,				-- Batch Size
 	imDim = 4,					-- Dimension of the image
 	cs = {0,1,2},				-- Channel select

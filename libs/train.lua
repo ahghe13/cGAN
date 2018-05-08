@@ -122,7 +122,7 @@ function Train(G, D, trainData, opt, e)
 
    local totalBatches = data:getTotalBatches()
    total_tm:reset()
-
+errT = {}
    for i=1,e do
       epoch_tm:reset()
       if opt.display == true then; print("Epoch " .. epoch); end
@@ -134,7 +134,9 @@ function Train(G, D, trainData, opt, e)
          print("Epoch " .. epoch .. " (" .. j .. "/" .. totalBatches .. ")", 
             "Itr time: " .. round(itr_tm:time().real, 4) .. "s",
             "Total time: " .. round(total_tm:time().real, 4) .. "s",
-            "errD: " .. round(errD, 4), "errG: " .. round(errG,4))
+            "errD: " .. round(errD, 4), "errG: " .. round(errG,4), 
+            "Total Error: " .. round(errG + errD,4))
+         table.insert(errT, {errG + errD})
       end
 
       data:shuffle()
@@ -145,14 +147,14 @@ function Train(G, D, trainData, opt, e)
       end
 
       if epoch % opt.save_nets == 0 then
-         torch.save(opt.save_nets_path .. 'epoch' .. epoch .. '_netG.t7', netG:clearState())
-         torch.save(opt.save_nets_path .. 'epoch' .. epoch .. '_netD.t7', netD:clearState())
+         torch.save(opt.save_nets_path .. '/epoch' .. epoch .. '_netG.t7', netG:clearState())
+         torch.save(opt.save_nets_path .. '/epoch' .. epoch .. '_netD.t7', netD:clearState())
       end
 
 
       epoch = epoch+1
    end
-
+Table2CSV(errT, opt.save_nets_path .. '/error.csv')
    if opt.display == true then; print('Total time: ' .. total_tm:time().real); end
 
 end
