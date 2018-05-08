@@ -52,8 +52,9 @@ end
 
 function Generate_data(netG, batch_size, number_of_classes)
 	local noise_c, class = generate_noise_c(netG:get(1).nInputPlane, number_of_classes, batch_size)
+       	local classes = Cat_vector(class, 0)
+	if netG:get(1).weight:type() == 'torch.CudaTensor' then; noise_c, class = noise_c:cuda(), class:cuda(); end
 	local generated_imgs = netG:forward(noise_c)
-	local classes = Cat_vector(class, 0)
 	return generated_imgs, classes
 end
 
@@ -122,10 +123,10 @@ end
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 0,
-	generate_images = 0,
+	mse = 1,
+	generate_images = 1,
 	transfer_function_analysis_fake = 1,
-	transfer_function_analysis_real = 0
+	transfer_function_analysis_real = 1
 }
 
 
@@ -233,9 +234,7 @@ if methods.transfer_function_analysis_fake == 1 then
 	for i=1,table.getn(nets) do
 		netG = torch.load(nets[i][2])
 		netD = torch.load(nets[i][3])
-
 		local data_batch, class = Generate_data(netG, batch_size, table.getn(opt.classes))
-
 		local outputD = netD:forward(data_batch)
 
 		local result = merge_tensors(class, outputD)
