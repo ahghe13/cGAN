@@ -8,16 +8,6 @@ include('libs/generate.lua')
 include('libs/image_normalization.lua')
 include('libs/paths_handling.lua')
 
-
-function Forward_netD(netD, dataSet, cs)
-	local netData = cloneTable(dataSet)
-	local paths = PopCol(netData, 1)
-	local target_output = torch.cat(torch.Tensor(#paths):fill(1), torch.Tensor(netData), 2)
-	local imgs = LoadImgs(paths, cs, 'minusone2one')
-	local output = netD:forward(dataSet)
-	return target_output, output
-end
-
 function Remove_col(tensor, idx)
 	local indices = torch.LongTensor(tensor:size(2)-1)
 	local ii = 1
@@ -56,6 +46,7 @@ function MSE(netD, data, tar)
 	local tar = Remove_col(tar, 1)
 
 	local mse = nn.MSECriterion()
+	if data:type() == 'torch.cudaTensor' then; mse:cuda(); end
 	return mse:forward(tar, out)
 end
 
