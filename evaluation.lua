@@ -63,8 +63,7 @@ function Load_Data(dataSet, cs, normalize)
 	local normalize = normalize or 'minusone2one' 
 	local data = cloneTable(dataSet)
 	local paths = PopCol(data, 1)
-	local imgs, tar = LoadImgs(paths, cs, normalize), Load_Target(dataSet)
-	return imgs, tar
+	return LoadImgs(paths, cs, normalize), Load_Target(dataSet)
 end
 
 function Load_Target(dataSet)
@@ -123,9 +122,9 @@ end
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 1,
+	mse = 0,
 	generate_images = 0,
-	transfer_function_analysis_fake = 0,
+	transfer_function_analysis_fake = 1,
 	transfer_function_analysis_real = 0
 }
 
@@ -149,7 +148,17 @@ valid = CSV2Table(nets_dir_path .. '/valid.csv')
 table.remove(valid, 1)
 print(opt)
 
-if opt.gpu > 0 then; require 'cunn'; end;
+if methods.mse == 1 or methods.transfer_function_analysis_real == 1 then
+	test_data, test_target = Load_Data(test, opt.cs)
+	valid_data, valid_target = Load_Data(valid, opt.cs)
+end
+
+if opt.gpu > 0 then
+	require 'cunn'
+	test_data, test_target = test_data:cuda(), test_target:cuda()
+	valid_data, valid_target = valid_data:cuda(), valid_target:cuda()
+end
+
 
 --######### APPLY EVALUATION METHODS FOR DESCRIMINATOR ############--
 
@@ -164,12 +173,6 @@ Table2CSV(nets, evaluation_path .. '/Networks.csv', 'a')
 if methods.mse == 1 then
 	io.write('Computing MSE... '):flush()
 	tableMSE = {{'Epoch', 'MSE (test)', 'MSE (valid)'}}
-	local test_data, test_target = Load_Data(test, opt.cs)
-	local valid_data, valid_target = Load_Data(valid, opt.cs)
-	if opt.gpu > 0 then
-		 test_data, test_target = test_data:cuda(), test_target:cuda()
-		 valid_data, valid_target = valid_data:cuda(), valid_target:cuda()
-	end
 
 	for i=1,table.getn(nets) do
 		local netD = torch.load(nets[i][3])
@@ -257,14 +260,12 @@ if methods.transfer_function_analysis_real == 1 then
 	local trans_path = evaluation_path .. '/Transfer_function_Real/'
 	paths.mkdir(trans_path)
 
-	local data_batch, class = Load_Data(test, opt.cs)
-
 	for i=1,table.getn(nets) do
 		netD = torch.load(nets[i][3])
 
-		local outputD = netD:forward(data_batch)
+		local outputD = netD:forward(test_data)
 
-		local result = merge_tensors(class, outputD)
+		local result = merge_tensors(test_target, outputD)
 		local result_table = Tensor2Table(result)
 
 		local output_file = trans_path .. 'Epoch' .. i .. '.csv'
