@@ -69,9 +69,10 @@ end
 function Load_Target(dataSet)
 	-- Takes table as input (w. paths and class-values),
 	-- converts the class-values to a tensor,
-	-- and adds a one to the first column
+	-- and adds a one-column in the beginning
 	local class_values = cloneTable(dataSet)
 	PopCol(class_values,1)
+	if table.getn(class_values[1]) == 0 then; return torch.Tensor(table.getn(class_values)):fill(1); end
 	class_values = torch.Tensor(class_values)
 	class_values_and_one_vector = Cat_vector(class_values, 1)
     return class_values_and_one_vector
@@ -123,8 +124,8 @@ end
 
 methods = {
 	mse = 0,
-	generate_images = 0,
-	transfer_function_analysis_fake = 1,
+	generate_images = 1,
+	transfer_function_analysis_fake = 0,
 	transfer_function_analysis_real = 0
 }
 
@@ -166,6 +167,7 @@ paths.mkdir(evaluation_path)
 Table2CSV({{'Epoch', 'Generator_path', 'Descriminator_path'}}, evaluation_path .. '/Networks.csv')
 Table2CSV(nets, evaluation_path .. '/Networks.csv', 'a')
 
+
 --                              MSE                                --
 
 if methods.mse == 1 then
@@ -197,8 +199,8 @@ if methods.generate_images == 1 then
 
 		im = generate(netG, row, col, table.getn(opt.classes))
 		if opt.net_name == 'mini_cGAN' then
-			im = image.scale(im, 2000,1000, 'simple')
-			image.save(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.jpg', im)
+			im = image.scale(norm_zero2one(im), 2000,1000, 'simple')
+			image.save(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.png', im)
 		else 
 			save_tif(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.tif', im)
 		end
@@ -207,10 +209,10 @@ if methods.generate_images == 1 then
 	local im_test = Load_Real_Images(test, row, col)
 	local im_valid = Load_Real_Images(valid, row, col)
 	if opt.net_name == 'mini_cGAN' then
-		im_test = image.scale(im_test, 2000,1000, 'simple')
-		im_valid = image.scale(im_valid, 2000,1000, 'simple')
-		image.save(gen_path .. 'real_test' .. '.jpg', im_test)
-		image.save(gen_path .. 'real_valid' .. '.jpg', im_valid)
+		im_test = image.scale(norm_zero2one(im_test), 2000,1000, 'simple')
+		im_valid = image.scale(norm_zero2one(im_valid), 2000,1000, 'simple')
+		image.save(gen_path .. 'real_test' .. '.png', im_test)
+		image.save(gen_path .. 'real_valid' .. '.png', im_valid)
 	else 
 		save_tif(gen_path .. 'real_test' .. '.tif', im_test)
 		save_tif(gen_path .. 'real_valid' .. '.tif', im_valid)

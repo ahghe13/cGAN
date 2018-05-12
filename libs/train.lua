@@ -120,6 +120,9 @@ function Train(G, D, trainData, opt, e)
 
    if epoch == nil then; epoch = 1; end
 
+--   torch.save(opt.save_nets_path .. '/epoch0_netG.t7', netG:clearState())
+--   torch.save(opt.save_nets_path .. '/epoch0_netD.t7', netD:clearState())
+
    local totalBatches = data:getTotalBatches()
    total_tm:reset()
 errT = {}

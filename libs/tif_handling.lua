@@ -4,10 +4,8 @@ require 'image'
 gm = require 'graphicsmagick'
 include('image_normalization.lua')
 
---p = "/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Campanula_cropped/campanula_day1/sliced_data_64x64/d01p01s001.tif"
-
 function load_tif(path, channels, normalize)
-	if channels == nil then
+	if channels == nil or channels == 'all' then
 		c = io.popen('identify "' .. path .. '" | wc -l'); c = c:read()
 		channels = {}; for i=1,c do;table.insert(channels, i-1); end
 	end

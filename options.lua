@@ -7,13 +7,13 @@ net_size = 'mini_size'			-- Choose between 'mini_size' or 'full_size'
 
 opt_mini_size = {
 	net_name = 'mini_cGAN',
-	data_info = '/home/ag/Dropbox/Uni/Master thesis/Software/Data/Mini_cGAN1/data_info.csv',
+	data_info = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Mini_GAN/data_info.csv',
 	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 30,				-- Training Epochs
 	batchSize = 12,				-- Batch Size
 	imDim = 4,					-- Dimension of the image
-	cs = {0,1,2},				-- Channel select
+	cs = {'all'},				-- Channel select
 	nz = 100,					-- Number of noise elements passed to generator
 	ngf = 4,					-- Number of generator filters in the first layer
 	ndf = 4,					-- Number of descriminator filters in the first layer
