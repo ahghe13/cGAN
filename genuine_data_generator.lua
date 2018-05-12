@@ -1,68 +1,73 @@
--- package.path = package.path .. ";/home/ag/Dropbox/Uni/Master thesis/Master thesis/Software/cGAN/cGAN_v10/?.lua"
-
 require 'torch'
 require 'image'
 
 require 'libs/image_normalization'
-require 'libs/tif_handler'
+require 'libs/tif_handling'
+require 'libs/table_handling'
 
-	ideal = torch.Tensor(3,4,4)
 
-	A = torch.Tensor{
-		{1,0.75,0.25,0},
-		{0.75,0.25,0,0},
-		{0.25,0,0,0},
-		{0,0,0,0}
-	}
-	B = torch.Tensor{
-		{0,0.25,0.75,1},
-		{0,0,0.25,0.75},
-		{0,0,0,0.25},
-		{0,0,0,0}
-	}
-	C = torch.Tensor{
-		{0,0,0,0},
-		{0.25,0,0,0},
-		{0.75,0.25,0,0},
-		{1,0.75,0.25,0}
-	}
-	D = torch.Tensor{
-		{0,0,0,0},
-		{0,0,0,0.25},
-		{0,0,0.25,0.75},
-		{0,0.25,0.75,0.5}
-	}
+--######################### DEVIATION FUNCTION ##########################--
 
-	ideal[1] = B + D/2
-	ideal[2] = A + D/2
-	ideal[3] = C
-
-function image_generator(ideal, std_dev, brightness)
-	local output = torch.Tensor(ideal:size(1),ideal:size(2),ideal:size(3))
+function image_generator(ideal, std_dev)
+	local output = ideal:clone()
 	for c=1,ideal:size(1) do
 		for i=1,ideal:size(2) do
 			for j=1,ideal:size(3) do
-				if (i > 1 and i < 4 and j > 1 and j < 4) then
-					output[c][i][j] = brightness * ideal[c][i][j]
-				else
-					output[c][i][j] = torch.normal(ideal[c][i][j], std_dev)
-				end
+				output[c][i][j] = ideal[c][i][j] * torch.normal(1, std_dev)
 			end
 		end
 	end
-	return output:clone()
+	return output
 end
 
-function generate_images(path, amount, std_dev)
-	file = io.open(path .. 'data_info.csv', 'w')
-	file:write('file,brightness\n')
-	for i=1,amount do
-		n = torch.uniform(0,4)
-		img = image_generator(ideal, std_dev, n)
-	--	image.display(image.scale(img, 250,250, 'simple'))
-		save_tif(path .. i .. '.tif', img)
-		file:write(i .. '.tif,' .. n .. "\n")
+
+--########################### CLASS FUNCTIONS ###########################--
+
+brightness = function(img)
+	local b = torch.uniform(0,1)
+	for c=1,img:size(1) do
+		img[c][2][2] = img[c][2][2] * (b*3); img[c][2][3] = img[c][2][3] * (b*3)
+		img[c][3][2] = img[c][3][2] * (b*3); img[c][3][3] = img[c][3][3] * (b*3)
 	end
-	file:close()
+	return b
 end
 
+
+--############################### OPTIONS ###############################--
+
+opt = {
+	ideal_img_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/ideal.tif',
+	save_data_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Mini_GAN',
+	data_size = 2000,
+--	classes = {{'brightness', brightness}},
+	classes = {},
+	std_dev = 0.5
+}
+
+
+--############################ GENERATE DATA #############################--
+
+-- Prepare data_info
+local data_info = {'file'}
+for i=1,table.getn(opt.classes) do
+	table.insert(data_info, opt.classes[i][1])
+end
+data_info = {data_info}
+
+-- Load ideal image
+local ideal = load_tif(opt.ideal_img_path, 'all', 'zero2one')
+
+-- Generate data
+for i=1,opt.data_size do
+	local img_info = {i .. '.tif'}
+	local img = image_generator(ideal, opt.std_dev)
+	for i=1,table.getn(opt.classes) do
+		class_value = opt.classes[i][2](img)
+		table.insert(img_info, class_value)
+	end
+	table.insert(data_info, img_info)
+--	image.display(image.scale(img, 250,250, 'simple'))
+	save_tif(opt.save_data_path .. '/' .. i .. '.tif', img)
+end
+
+Table2CSV(data_info, opt.save_data_path .. '/data_info.csv')

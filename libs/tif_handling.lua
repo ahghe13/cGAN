@@ -4,10 +4,8 @@ require 'image'
 gm = require 'graphicsmagick'
 include('image_normalization.lua')
 
---p = "/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Campanula_cropped/campanula_day1/sliced_data_64x64/d01p01s001.tif"
-
-function load_tif(path, channels)
-	if channels == nil then
+function load_tif(path, channels, normalize)
+	if channels == nil or channels == 'all' then
 		c = io.popen('identify "' .. path .. '" | wc -l'); c = c:read()
 		channels = {}; for i=1,c do;table.insert(channels, i-1); end
 	end
@@ -19,16 +17,20 @@ function load_tif(path, channels)
 		img[i] = gm.Image(path .. '[' .. channels[i] .. ']'):toTensor('byte', 'I')
 	end
 
-	return img
+	if normalize == 'minusone2one' then; img = norm_minusone2one(img);
+	elseif normalize == 'zero2one' then; img = norm_zero2one(img);
+	end
+	
+	return img, channels
 end
 
-function LoadImgs(paths, channels)
+function LoadImgs(paths, channels, normalize)
 	-- Loads multiple images at once using paths in a table
-	local img = load_tif(paths[1], channels)
+	local img = load_tif(paths[1], channels, normalize)
 	local imgs = torch.Tensor(#paths, #channels, img:size(2), img:size(3))
 	imgs[1] = img:clone()
 	for i=2,#paths do
-		imgs[i] = load_tif(paths[i], channels)
+		imgs[i] = load_tif(paths[i], channels, normalize)
 	end
 	return imgs
 end
