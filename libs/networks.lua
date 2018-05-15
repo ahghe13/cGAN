@@ -30,7 +30,6 @@ function mini_networks(opt)
 	-- state size: (classes + 1) x 1 x 1
 	netD:add(nn.View(table.getn(opt.classes) + 1):setNumInputDims(3))
 	-- state size: (classes + 1)
-
 	netD:apply(weights_init)
 
 	return netG, netD
