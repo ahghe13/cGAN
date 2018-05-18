@@ -53,14 +53,29 @@ function SplitTable(tab, portions)
 end
 
 function Tensor2Table(tensor)
-	local tab = {}
-	for i=1,tensor:size(1) do
-		tab[i] = {}
-		for j=1,tensor:size(2) do
-			tab[i][j] = tensor[i][j]
-		end
-	end
-	return tab
+  local tab = {}
+  for i=1,tensor:size(1) do
+    tab[i] = {}
+    for j=1,tensor:size(2) do
+      tab[i][j] = tensor[i][j]
+    end
+  end
+  return tab
+end
+
+function Tensor2Table_beta(tensor)
+  local tab = {}
+  if tensor:size():size() == 1 then
+    for i=1,tensor:size(1) do
+      table.insert(tab, tensor[i])
+    end
+    return tab
+  else
+    for i=1,tensor:size(1) do
+      table.insert(tab, Tensor2Table_n(tensor[i]))
+    end
+    return tab
+  end
 end
 
 function CSV2Table(path)

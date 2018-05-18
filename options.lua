@@ -10,7 +10,7 @@ opt_mini_size = {
 	data_info = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Mini_GAN/data_info.csv',
 	trainP = 80, testP = 10, validP = 10,
 
-	epochs = 20,				-- Training Epochs
+	epochs = 30,				-- Training Epochs
 	batchSize = 12,				-- Batch Size
 	imDim = 4,					-- Dimension of the image
 	cs = {'all'},				-- Channel select

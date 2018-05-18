@@ -7,6 +7,7 @@ include('libs/tif_handling.lua')
 include('libs/generate.lua')
 include('libs/image_normalization.lua')
 include('libs/paths_handling.lua')
+include('libs/image_distance.lua')
 
 function Remove_col(tensor, idx)
 	local indices = torch.LongTensor(tensor:size(2)-1)
@@ -52,7 +53,7 @@ end
 
 function Generate_data(netG, batch_size, number_of_classes)
 	local noise_c, class = generate_noise_c(netG:get(1).nInputPlane, number_of_classes, batch_size)
-       	local classes = Cat_vector(class, 0)
+   	local classes = Cat_vector(class, 0)
 	if netG:get(1).weight:type() == 'torch.CudaTensor' then; noise_c, class = noise_c:cuda(), class:cuda(); end
 	local generated_imgs = netG:forward(noise_c)
 	return generated_imgs, classes
@@ -121,25 +122,38 @@ function Load_Real_Images(dataSet, row, col)
 	return imgs
 end
 
+function Histogram2CSV(hist, path)
+	local test_hist_tab = torch.Tensor(hist:size(1), 1)
+	test_hist_tab:copy(hist)
+	test_hist_tab = Tensor2Table(test_hist_tab)
+
+	Table2CSV({{'Histogram'}}, path, 'w')
+	Table2CSV(test_hist_tab, path, 'a')
+end
+
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 0,
-	generate_images = 1,
-	transfer_function_analysis_fake = 0,
-	transfer_function_analysis_real = 0
+	mse = 0,									-- Mini cGAN and Full cGAN
+	generate_images = 0,						-- All types of GAN
+	transfer_function_analysis_fake = 0,		-- Mini cGAN and Full cGAN
+	transfer_function_analysis_real = 0,		-- Mini cGAN and Full cGAN
+	kullback_leibler_distance = 0,				-- All types of GAN
+	deviation_from_ideal = 1
 }
 
 
 --#################### SORT NETS INTO TABLE #######################--
 
 --nets_dir_path = arg[1] or '/home/ag/Desktop/Networks05'
-nets_dir_path = arg[1] or '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks'
+nets_dir_path = arg[1] or '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks_Mini_GAN'
 --nets_dir_path = arg[1] or '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
 Exclude_paths(nets_paths, 'epoch')
 nets = Nets2Table(nets_paths)
+torch.manualSeed(10)
+
 
 --################# LOAD OPT, TEST, AND VALID #####################--
 
@@ -189,11 +203,11 @@ end
 --                         GENERATE IMAGES                         --
 
 if methods.generate_images == 1 then
+	local row, col = 5, 10
+
 	io.write('Generating images... '):flush()
 	local gen_path = evaluation_path .. '/Generated_images/'
 	paths.mkdir(gen_path)
-
-	local row, col = 5, 10
 
 	for i=1,table.getn(nets) do
 		netG = torch.load(nets[i][2])
@@ -271,6 +285,72 @@ if methods.transfer_function_analysis_real == 1 then
 		Table2CSV(Generate_first_row(opt.classes), output_file, 'w')
 		Table2CSV(result_table, output_file, 'a')
 	end
+
+	print('Done!')
+end
+
+
+--                     KULLBACK-LEIBLER DISTANCE                   --
+
+if methods.kullback_leibler_distance == 1 then
+	local sample_size = 150
+
+	io.write('Computing Kullback-Leibler distance... '):flush()
+	local kl_path = evaluation_path .. '/Kullback-Leibler/'
+	paths.mkdir(kl_path)
+
+	local test_distances = images_distance(test_data, sample_size)
+	test_hist = torch.histc(test_distances)
+
+	kl_crit = nn.DistKLDivCriterion()
+	kl_distances = {{'Epoch', 'KL Distance'}}
+
+	for i=1,table.getn(nets) do
+		local netG = torch.load(nets[i][2])
+		local fake_data = Generate_data(netG, sample_size, table.getn(opt.classes))
+		fake_data = norm_minusone2one_beta(fake_data)
+		local fake_data_distances = images_distance(fake_data, sample_size)
+		local fake_data_hist = torch.histc(fake_data_distances)
+		local distance = kl_crit:forward(torch.log(fake_data_hist:add(1)), test_hist)
+		table.insert(kl_distances, {nets[i][1], distance})
+
+		Histogram2CSV(fake_data_hist, kl_path .. 'epoch' .. i ..  '_iid_histogram.csv')
+	end
+
+	Histogram2CSV(test_hist, kl_path .. 'test_data_iid_histogram.csv')
+
+	Table2CSV(kl_distances, kl_path .. 'Kullback-Leibler_distance.csv', 'w')
+
+	print('Done!')
+end
+
+
+--                     DEVIATION FROM IDEAL                   --
+
+if methods.deviation_from_ideal == 1 then
+	local sample_size = 10000
+	local ideal_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/ideal.tif'
+
+	io.write('Computing deviation from ideal... '):flush()
+	local ideal = load_tif(ideal_path, 'all', 'minusone2one')
+	dev = {{'Epoch', 'Mean', 'Standard Deviation', 'Mean (train)', 'Standard Deviation (train)'}}
+
+	local train = CSV2Table(nets_dir_path .. '/train.csv'); table.remove(train, 1)
+	local train_data, train_target = Load_Data(train, opt.cs)
+	local linear_dist = Linear_Images_distance(train_data, ideal)
+	local m_t, s_t = torch.mean(linear_dist), torch.std(linear_dist)
+
+
+	for i=1,table.getn(nets) do
+		local netG = torch.load(nets[i][2])
+		local fake_data = Generate_data(netG, sample_size, table.getn(opt.classes))
+		fake_data = norm_minusone2one_beta(fake_data)
+		local linear_dist = Linear_Images_distance(fake_data, ideal)
+		table.insert(dev, {nets[i][1], torch.mean(linear_dist), torch.std(linear_dist),m_t, s_t})
+	end
+
+	local output_file = evaluation_path .. 'Deviation_from_ideal.csv'
+	Table2CSV(dev, output_file, 'w')
 
 	print('Done!')
 end
