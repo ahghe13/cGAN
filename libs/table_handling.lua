@@ -72,7 +72,7 @@ function Tensor2Table_beta(tensor)
     return tab
   else
     for i=1,tensor:size(1) do
-      table.insert(tab, Tensor2Table_n(tensor[i]))
+      table.insert(tab, Tensor2Table_beta(tensor[i]))
     end
     return tab
   end

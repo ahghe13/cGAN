@@ -15,8 +15,8 @@ end
 function Train(G, D, trainData, opt, e)
    data = Data:create(trainData, opt.batchSize, opt.cs)
 
-   optimStateG = {learningRate = opt.learningRate}
-   optimStateD = {learningRate = opt.learningRate}
+   optimStateG = {learningRate = opt.learningRate, beta1 = opt.beta1}
+   optimStateD = {learningRate = opt.learningRate, beta1 = opt.beta1}
 
    local fake_label = 0
    local real_label = 1

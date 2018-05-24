@@ -7,7 +7,7 @@ net_size = 'mini_size'			-- Choose between 'mini_size' or 'full_size'
 
 opt_mini_size = {
 	net_name = 'mini_cGAN',
-	data_info = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Mini_GAN/data_info.csv',
+	data_info = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Mini_sGAN/data_info.csv',
 	trainP = 80, testP = 10, validP = 10,
 
 	epochs = 30,				-- Training Epochs
@@ -18,6 +18,7 @@ opt_mini_size = {
 	ngf = 4,					-- Number of generator filters in the first layer
 	ndf = 4,					-- Number of descriminator filters in the first layer
 	learningRate = 0.0005,  	-- initial learning rate for adam
+	beta1 = 0.5,
 
 	noise_type = 'gaussian',	-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
 	save_nets = 1,				-- save every nth network; 0=disable
@@ -43,6 +44,7 @@ opt_full_size = {
 	ngf = 64,				-- Number of generator filters in the first layer
 	ndf = 64,				-- Number of descriminator filters in the first layer
 	learningRate = 0.0002,	-- initial learning rate for adam
+	beta1 = 0.5,
 
 	noise_type = 'gaussian',	-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
 	save_nets = 1,			-- save every nth network; 0=disable

@@ -37,10 +37,10 @@ end
 
 opt = {
 	ideal_img_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/ideal.tif',
-	save_data_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Mini_GAN',
+	save_data_path = '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Data/Mini_sGAN',
 	data_size = 2000,
---	classes = {{'brightness', brightness}},
-	classes = {},
+	classes = {{'brightness', brightness}},
+--	classes = {},
 	std_dev = 0.5
 }
 

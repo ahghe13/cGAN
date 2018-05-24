@@ -119,7 +119,7 @@ function Load_Real_Images(dataSet, row, col)
 	local real_imgs_table = Pick_Sample(dataSet, row*col)
 	local real_imgs = LoadImgs(PopCol(real_imgs_table, 1), opt.cs, 'minusone2one')
 	local imgs = arrange(real_imgs, row, col)
-	return imgs
+	return imgs, real_imgs_table
 end
 
 function Histogram2CSV(hist, path)
@@ -135,18 +135,18 @@ end
 
 methods = {
 	mse = 0,									-- Mini cGAN and Full cGAN
-	generate_images = 0,						-- All types of GAN
+	generate_images = 1,						-- All types of GAN
 	transfer_function_analysis_fake = 0,		-- Mini cGAN and Full cGAN
 	transfer_function_analysis_real = 0,		-- Mini cGAN and Full cGAN
-	kullback_leibler_distance = 0,				-- All types of GAN
-	deviation_from_ideal = 1
+	kullback_leibler_distance = 0,				-- All types of GAN ()
+	deviation_from_ideal = 0					-- Mini GAN only	
 }
 
 
 --#################### SORT NETS INTO TABLE #######################--
 
 --nets_dir_path = arg[1] or '/home/ag/Desktop/Networks05'
-nets_dir_path = arg[1] or '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks_Mini_GAN'
+nets_dir_path = arg[1] or '/media/ag/F81AFF0A1AFEC4A2/Master Thesis/Networks/Networks_Mini_sGAN'
 --nets_dir_path = arg[1] or '/scratch/sdubats/ahghe13/Networks01_nonCuda'
 
 nets_paths = List_Files_in_Dir(nets_dir_path, '.t7')
@@ -212,7 +212,13 @@ if methods.generate_images == 1 then
 	for i=1,table.getn(nets) do
 		netG = torch.load(nets[i][2])
 
-		im = generate(netG, row, col, table.getn(opt.classes))
+		local im, classes = generate(netG, row, col, table.getn(opt.classes))
+		if classes ~= nil then
+			classes =  classes:reshape(classes:size(1), 1)
+			classes = Tensor2Table(classes)
+			Table2CSV(classes, gen_path .. 'classes_epoch' .. i .. '.csv')
+		end
+
 		if opt.net_name == 'mini_cGAN' then
 			im = image.scale(norm_zero2one(im), 2000,1000, 'simple')
 			image.save(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.png', im)
@@ -221,8 +227,8 @@ if methods.generate_images == 1 then
 		end
 	end
 
-	local im_test = Load_Real_Images(test, row, col)
-	local im_valid = Load_Real_Images(valid, row, col)
+	local im_test, classes_test = Load_Real_Images(test, row, col)
+	local im_valid, classes_valid = Load_Real_Images(valid, row, col)
 	if opt.net_name == 'mini_cGAN' then
 		im_test = image.scale(norm_zero2one(im_test), 2000,1000, 'simple')
 		im_valid = image.scale(norm_zero2one(im_valid), 2000,1000, 'simple')
@@ -233,6 +239,8 @@ if methods.generate_images == 1 then
 		save_tif(gen_path .. 'real_valid' .. '.tif', im_valid)
 	end
 
+	Table2CSV(classes_test, gen_path .. 'classes_test.csv')
+	Table2CSV(classes_valid, gen_path .. 'classes_valid.csv')
 
 	print('Done!')
 end
