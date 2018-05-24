@@ -209,38 +209,7 @@ if methods.generate_images == 1 then
 	local gen_path = evaluation_path .. '/Generated_images/'
 	paths.mkdir(gen_path)
 
-	for i=1,table.getn(nets) do
-		netG = torch.load(nets[i][2])
-
-		local im, classes = generate(netG, row, col, table.getn(opt.classes))
-		if classes ~= nil then
-			classes =  classes:reshape(classes:size(1), 1)
-			classes = Tensor2Table(classes)
-			Table2CSV(classes, gen_path .. 'classes_epoch' .. i .. '.csv')
-		end
-
-		if opt.net_name == 'mini_cGAN' then
-			im = image.scale(norm_zero2one(im), 2000,1000, 'simple')
-			image.save(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.png', im)
-		else 
-			save_tif(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.tif', im)
-		end
-	end
-
-	local im_test, classes_test = Load_Real_Images(test, row, col)
-	local im_valid, classes_valid = Load_Real_Images(valid, row, col)
-	if opt.net_name == 'mini_cGAN' then
-		im_test = image.scale(norm_zero2one(im_test), 2000,1000, 'simple')
-		im_valid = image.scale(norm_zero2one(im_valid), 2000,1000, 'simple')
-		image.save(gen_path .. 'real_test' .. '.png', im_test)
-		image.save(gen_path .. 'real_valid' .. '.png', im_valid)
-	else 
-		save_tif(gen_path .. 'real_test' .. '.tif', im_test)
-		save_tif(gen_path .. 'real_valid' .. '.tif', im_valid)
-	end
-
-	Table2CSV(classes_test, gen_path .. 'classes_test.csv')
-	Table2CSV(classes_valid, gen_path .. 'classes_valid.csv')
+	generate_sGAN(test, valid, row, col, nets, gen_path)
 
 	print('Done!')
 end
