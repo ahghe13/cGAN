@@ -45,9 +45,10 @@ function generate_sGAN(test, valid, row, col, nets, gen_path)
 	for i=1,table.getn(nets) do
 		local netG = torch.load(nets[i][2])
 
-		local im, classes = generate(netG, row, col, table.getn(opt.classes), torch.Tensor(classes_test))
+		local c = torch.Tensor(classes_test)
+		local im, classes = generate(netG, row, col, table.getn(opt.classes), c)
 		if classes ~= nil then
-			classes =  classes:reshape(classes:size(1), 1)
+			classes =  classes:reshape(classes:size(1), table.getn(opt.classes))
 			classes = Tensor2Table(classes)
 			Table2CSV(classes, gen_path .. 'classes_epoch' .. i .. '.csv')
 		end

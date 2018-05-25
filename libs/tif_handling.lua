@@ -37,11 +37,11 @@ end
 
 function save_tif(path, img)
 	local im = norm_zero2one(img)
-	local channels = img:size(1)
+	local channels = im:size(1)
 	local s = 'convert '
 	local r = 'rm '
 	for i=1,channels do
-		image.save('temp_im'.. i .. '.jpg', img[i])
+		image.save('temp_im'.. i .. '.jpg', im[i])
 		s = s .. 'temp_im'.. i .. '.jpg '
 		r = r .. 'temp_im'.. i .. '.jpg '
 	end
