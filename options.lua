@@ -18,7 +18,7 @@ opt_mini_size = {
 	ngf = 4,					-- Number of generator filters in the first layer
 	ndf = 4,					-- Number of descriminator filters in the first layer
 	learningRate = 0.0005,  	-- initial learning rate for adam
-	beta1 = 0.5,
+--	beta1 = 0.5,
 
 	noise_type = 'gaussian',	-- Choose between 'gaussian', 'uniform_zero2one', or 'uniform_minusone2one'
 	save_nets = 1,				-- save every nth network; 0=disable

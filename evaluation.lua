@@ -2,44 +2,17 @@ require 'torch'
 require 'nn'
 require 'image'
 
+include('libs/data.lua')
 include('libs/table_handling.lua')
 include('libs/tif_handling.lua')
 include('libs/generate.lua')
 include('libs/image_normalization.lua')
 include('libs/paths_handling.lua')
 include('libs/image_distance.lua')
+include('libs/tensor_handling.lua')
+include('libs/misc.lua')
 
-function Remove_col(tensor, idx)
-	local indices = torch.LongTensor(tensor:size(2)-1)
-	local ii = 1
-	for i=1,tensor:size(2) do
-		if i ~= idx then; indices[ii] = i; ii = ii + 1; end
-	end
-	return tensor:index(2, indices)
-end
 
-function Nets2Table(netspaths)
-	local nets = cloneTable(netspaths)
-	local sorted_nets = {}
-	local e = 9999
-	local prev_e = 0
-	local netG_path = ''
-	local netD_path = ''
-
-	for i=1,table.getn(nets)/2 do
-		for j=1,table.getn(nets) do
-			if get_epoch(nets[j]) <= e and get_epoch(nets[j]) > prev_e then
-				e = get_epoch(nets[j])
-				if get_net_type(nets[j]) == 'netG' then; netG_path = nets[j]; end
-				if get_net_type(nets[j]) == 'netD' then; netD_path = nets[j]; end
-			end
-		end
-		table.insert(sorted_nets, {e, netG_path, netD_path})
-		prev_e = e
-		e = 9999
-	end
-	return sorted_nets
-end
 
 function MSE(netD, data, tar)
 	local out = netD:forward(data)
@@ -57,33 +30,6 @@ function Generate_data(netG, batch_size, number_of_classes)
 	if netG:get(1).weight:type() == 'torch.CudaTensor' then; noise_c, class = noise_c:cuda(), class:cuda(); end
 	local generated_imgs = netG:forward(noise_c)
 	return generated_imgs, classes
-end
-
-function Load_Data(dataSet, cs, normalize)
-	-- Loads images from table's first column
-	-- and class-values from the other columns
-	local normalize = normalize or 'minusone2one' 
-	local data = cloneTable(dataSet)
-	local paths = PopCol(data, 1)
-	return LoadImgs(paths, cs, normalize), Load_Target(dataSet)
-end
-
-function Load_Target(dataSet)
-	-- Takes table as input (w. paths and class-values),
-	-- converts the class-values to a tensor,
-	-- and adds a one-column in the beginning
-	local class_values = cloneTable(dataSet)
-	PopCol(class_values,1)
-	if table.getn(class_values[1]) == 0 then; return torch.Tensor(table.getn(class_values)):fill(1); end
-	class_values = torch.Tensor(class_values)
-	class_values_and_one_vector = Cat_vector(class_values, 1)
-    return class_values_and_one_vector
-end
-
-function Cat_vector(tensor, vector_value)
-	local vector = torch.Tensor(tensor:size(1)):fill(vector_value)
-	local tensor_and_vector = torch.cat(vector, tensor, 2)
-	return tensor_and_vector
 end
 
 function Generate_first_row(names_of_classes)
@@ -134,11 +80,11 @@ end
 --################### CHOOSE EVALUATION METHOD ####################--
 
 methods = {
-	mse = 0,									-- Mini cGAN and Full cGAN
+	mse = 1,									-- Mini cGAN and Full cGAN
 	generate_images = 1,						-- All types of GAN
-	transfer_function_analysis_fake = 0,		-- Mini cGAN and Full cGAN
-	transfer_function_analysis_real = 0,		-- Mini cGAN and Full cGAN
-	kullback_leibler_distance = 0,				-- All types of GAN ()
+	transfer_function_analysis_fake = 1,		-- Mini cGAN and Full cGAN
+	transfer_function_analysis_real = 1,		-- Mini cGAN and Full cGAN
+	kullback_leibler_distance = 1,				-- All types of GAN ()
 	deviation_from_ideal = 0					-- Mini GAN only	
 }
 
@@ -158,14 +104,13 @@ torch.manualSeed(10)
 --################# LOAD OPT, TEST, AND VALID #####################--
 
 opt = torch.load(nets_dir_path .. '/opt.t7')
-test = CSV2Table(nets_dir_path .. '/test.csv')
-table.remove(test, 1)
-valid = CSV2Table(nets_dir_path .. '/valid.csv')
-table.remove(valid, 1)
-print(opt)
+test = CSV2Table(nets_dir_path .. '/test.csv'); table.remove(test, 1)
+test = Data:create(test, opt.batchSize, opt.cs)
+valid = CSV2Table(nets_dir_path .. '/valid.csv'); table.remove(valid, 1)
+valid = Data:create(valid, opt.batchSize, opt.cs)
 
-test_data, test_target = Load_Data(test, opt.cs)
-valid_data, valid_target = Load_Data(valid, opt.cs)
+test_data, test_target = test:getData(); test_target = Cat_vector(test_target, 1)
+valid_data, valid_target = valid:getData(); valid_target = Cat_vector(valid_target, 1)
 
 if opt.gpu > 0 then
 	require 'cunn'
@@ -173,6 +118,7 @@ if opt.gpu > 0 then
 	valid_data, valid_target = valid_data:cuda(), valid_target:cuda()
 end
 
+print(opt)
 
 --######### APPLY EVALUATION METHODS FOR DESCRIMINATOR ############--
 
@@ -209,7 +155,29 @@ if methods.generate_images == 1 then
 	local gen_path = evaluation_path .. '/Generated_images/'
 	paths.mkdir(gen_path)
 
-	generate_sGAN(test, valid, row, col, nets, gen_path)
+	for i=1,table.getn(nets) do
+		local netG = torch.load(nets[i][2])
+
+		local c = torch.Tensor(classes_test)
+		local im, classes = generate(netG, row, col, table.getn(opt.classes), c)
+
+		if opt.net_name == 'mini_cGAN' then
+			im = image.scale(norm_zero2one(im), 2000,1000, 'simple')
+			image.save(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.png', im)
+		else 
+			save_tif(gen_path .. File_name(nets[i][2]):sub(1,-4) .. '.tif', im)
+		end
+	end
+
+	if opt.net_name == 'mini_cGAN' then
+		local im_test = image.scale(norm_zero2one(test_data), 2000,1000, 'simple')
+		local im_valid = image.scale(norm_zero2one(valid_data), 2000,1000, 'simple')
+		image.save(gen_path .. 'real_test' .. '.png', im_test)
+		image.save(gen_path .. 'real_valid' .. '.png', im_valid)
+	else 
+		save_tif(gen_path .. 'real_test' .. '.tif', im_test)
+		save_tif(gen_path .. 'real_valid' .. '.tif', im_valid)
+	end
 
 	print('Done!')
 end

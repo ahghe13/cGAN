@@ -12,10 +12,12 @@ include('libs/table_handling.lua')
 if net_size == 'mini_size' then; opt = opt_mini_size; end
 if net_size == 'full_size' then; opt = opt_full_size; end
 
-opt.batchSize = tonumber(os.getenv('BATCH_SIZE')) or opt.batchSize
-opt.nz = tonumber(os.getenv('NZ')) or opt.nz
-opt.display = tonumber(os.getenv('DISP')) or opt.display
-opt.save_nets = tonumber(os.getenv('SAVE_NETS')) or opt.save_nets
+--opt.batchSize = tonumber(os.getenv('BATCH_SIZE')) or opt.batchSize
+--opt.nz = tonumber(os.getenv('NZ')) or opt.nz
+--opt.display = tonumber(os.getenv('DISP')) or opt.display
+--opt.save_nets = tonumber(os.getenv('SAVE_NETS')) or opt.save_nets
+opt.save_nets_path = arg[1] or opt.save_nets_path
+opt.cs = arg[2] or opt.cs
 
 if opt.display == 0 then; opt.display = false; else; opt.display = true; end
 
@@ -73,4 +75,4 @@ if opt.gpu > 0 then
 end
 ]]--
 
-arg = {opt.save_nets_path}; dofile('evaluation.lua')
+--arg = {opt.save_nets_path}; dofile('evaluation.lua')

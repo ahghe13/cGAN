@@ -151,3 +151,26 @@ function Table2CSV(tab, file_name, mode)
   end
   file:close()
 end
+
+function Nets2Table(netspaths)
+  local nets = cloneTable(netspaths)
+  local sorted_nets = {}
+  local e = 9999
+  local prev_e = 0
+  local netG_path = ''
+  local netD_path = ''
+
+  for i=1,table.getn(nets)/2 do
+    for j=1,table.getn(nets) do
+      if get_epoch(nets[j]) <= e and get_epoch(nets[j]) > prev_e then
+        e = get_epoch(nets[j])
+        if get_net_type(nets[j]) == 'netG' then; netG_path = nets[j]; end
+        if get_net_type(nets[j]) == 'netD' then; netD_path = nets[j]; end
+      end
+    end
+    table.insert(sorted_nets, {e, netG_path, netD_path})
+    prev_e = e
+    e = 9999
+  end
+  return sorted_nets
+end

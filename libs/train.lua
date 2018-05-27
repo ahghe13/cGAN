@@ -13,10 +13,10 @@ function round(num, numDecimalPlaces)
 end
 
 function Train(G, D, trainData, opt, e)
-   data = Data:create(trainData, opt.batchSize, opt.cs)
+   local data = Data:create(trainData, opt.batchSize, opt.cs)
 
-   optimStateG = {learningRate = opt.learningRate, beta1 = opt.beta1}
-   optimStateD = {learningRate = opt.learningRate, beta1 = opt.beta1}
+   local optimStateG = {learningRate = opt.learningRate, beta1 = opt.beta1}
+   local optimStateD = {learningRate = opt.learningRate, beta1 = opt.beta1}
 
    local fake_label = 0
    local real_label = 1
@@ -112,6 +112,7 @@ function Train(G, D, trainData, opt, e)
       return errG, gradParametersG
    end
 
+   local epoch = epoch
    if epoch == nil then; epoch = 1; end
 
 --   torch.save(opt.save_nets_path .. '/epoch0_netG.t7', netG:clearState())

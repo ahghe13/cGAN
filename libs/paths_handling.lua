@@ -51,3 +51,11 @@ function List_Files_in_Dir(dir_path, ext)
 	end
 	return files
 end
+
+function getNets(path)
+	-- Takes path to trained network folder and
+	-- returns networks in table
+	local nets_paths = List_Files_in_Dir(path, '.t7')
+	Exclude_paths(nets_paths, 'epoch')
+	return Nets2Table(nets_paths)
+end
