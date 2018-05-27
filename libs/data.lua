@@ -14,7 +14,7 @@ function Data:create(dataTable, batchSize, channels)
    setmetatable(myData,Data)
    myData.dataTable = dataTable
    myData.classes = #dataTable[1] - 1
-   myData.dataSize = table.getn(myData.dataTable)-1
+   myData.dataSize = table.getn(myData.dataTable) -- -1
    myData.batchSize = batchSize
    myData.channels = channels
    myData.imDim = #load_tif(myData.dataTable[1][1], myData.channels)
@@ -59,7 +59,7 @@ end
 function Data:getData(amount)
    local amount = amount or self:getDataSize()
    local imgs = torch.Tensor(self:getDataSize(), self.imDim[1], self.imDim[2], self.imDim[3])
-   local class_values = torch.Tensor(self:getDataSize(), self:getClasses())
+   local class_values = torch.Tensor(amount, self:getClasses())
    for i=1, amount do
       imgs[i] = load_tif(self.dataTable[i][1], self.channels, 'minusone2one')
       for j=1,self:getClasses() do

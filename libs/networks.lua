@@ -17,11 +17,6 @@ function mini_networks(opt)
 	-- state size: (cs) x 4 x 4
 	netG:apply(weights_init)
 
-	print('HERE')
-	print(#netG:get(1).weight)
-
-
-
 	--####################### DESCRIMINATOR #######################--
 
 	local netD = nn.Sequential()
